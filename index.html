@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aplikasi DCM & RPLBK Online/Offline - BK MTs Negeri 7 Tasikmalaya</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS CDN for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            500: '#334e68',
+                            800: '#102a43',
+                            900: '#0b1b2b',
+                        },
+                        teal: {
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                        },
+                        emerald: {
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .pulse-online { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulseGreen 2s infinite; }
+        .pulse-offline { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulseRed 2s infinite; }
+        @keyframes pulseGreen {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulseRed {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #rpl-preview-card, #rpl-preview-card * { visibility: visible; }
+            #rpl-preview-card { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; background: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 antialiased min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-navy-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Branding -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center font-bold text-xl text-white shadow-md">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base sm:text-lg leading-tight">DCM & RPLBK Online/Offline</h1>
+                        <p class="text-xs text-teal-300">BK MTs Negeri 7 Tasikmalaya</p>
+                    </div>
+                </div>
+
+                <!-- System Mode & Status Indicators -->
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Network Status Toggle Simulator -->
+                    <button id="net-toggle-btn" onclick="toggleNetworkStatus()" class="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition">
+                        <span id="net-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-online"></span>
+                        <span id="net-status-text" class="hidden sm:inline">Online</span>
+                        <i class="fa-solid fa-wifi text-xs"></i>
+                    </button>
+
+                    <!-- Pending Sync Counter Badge -->
+                    <div id="sync-badge" class="hidden flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-pointer" onclick="switchTab('sync')">
+                        <i class="fa-solid fa-cloud-arrow-up animate-bounce"></i>
+                        <span id="sync-count" class="font-bold">0</span>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-navy-800 transition">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-navy-800 border-t border-navy-700/50">
+            <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <nav class="flex space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar py-2">
+                    <button id="tab-btn-siswa" onclick="switchTab('siswa')" class="tab-btn active px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-2 bg-teal-600 text-white whitespace-nowrap">
+                        <i class="fa-solid fa-user-pen"></i>
+                        <span>Siswa (Pengisian DCM)</span>
+                    </button>
+                    <button id="tab-btn-guru" onclick="switchTab('guru')" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-2 text-slate-300 hover:bg-navy-700/50 hover:text-white whitespace-nowrap">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Dashboard Konselor</span>
+                    </button>
+                    <button id="tab-btn-program" onclick="switchTab('program')" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-2 text-slate-300 hover:bg-navy-700/50 hover:text-white whitespace-nowrap">
+                        <i class="fa-solid fa-file-signature"></i>
+                        <span>Program BK & RPLBK</span>
+                    </button>
+                    <button id="tab-btn-kelola" onclick="switchTab('kelola')" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-2 text-slate-300 hover:bg-navy-700/50 hover:text-white whitespace-nowrap">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Kelola Instrumen & Data</span>
+                    </button>
+                    <button id="tab-btn-sync" onclick="switchTab('sync')" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-2 text-slate-300 hover:bg-navy-700/50 hover:text-white whitespace-nowrap">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Status & Offline Sync</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: SISWA - PENGISIAN DCM -->
+        <section id="tab-siswa" class="tab-content space-y-6">
+            <!-- Student Identity Card -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-navy-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-teal-600"></i>
+                            Instrumen DCM (Daftar Cek Masalah)
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Pilihlah masalah-masalah yang sedang Anda hadapi saat ini dengan mencentang kotak yang sesuai.</p>
+                    </div>
+                    <!-- Form Status Indicator -->
+                    <div class="flex items-center space-x-2 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-xl self-start md:self-auto text-xs">
+                        <i class="fa-solid fa-floppy-disk text-teal-500"></i>
+                        <span id="auto-save-status" class="text-slate-600 dark:text-slate-300">Tersimpan di IndexedDB Perangkat</span>
+                    </div>
+                </div>
+
+                <!-- Student Bio Inputs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Nama Lengkap</label>
+                        <input type="text" id="student-name" value="Ahmad Fauzi" placeholder="Masukkan nama..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Kelas</label>
+                        <select id="student-class" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none">
+                            <option value="VII A">VII A</option>
+                            <option value="VII B">VII B</option>
+                            <option value="VII C">VII C</option>
+                            <option value="VIII A">VIII A</option>
+                            <option value="IX A">IX A</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Jenis Kelamin</label>
+                        <select id="student-gender" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none">
+                            <option value="L">Laki-Laki</option>
+                            <option value="P">Perempuan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">NISN / Nomor Absen</label>
+                        <input type="text" id="student-id" value="0081234567" placeholder="NISN..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Progress Bar -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">Progress Pengisian Terpilih</span>
+                    <span id="global-progress-text" class="text-xs font-bold text-teal-600 dark:text-teal-400">0 Problem Tercentang</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                    <div id="global-progress-bar" class="bg-teal-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Category Selector Tabs -->
+            <div class="flex overflow-x-auto space-x-2 custom-scrollbar pb-2" id="category-pills">
+                <!-- Dynamic pills -->
+            </div>
+
+            <!-- Dynamic Questions Area -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <h3 id="current-category-title" class="font-bold text-lg text-navy-800 dark:text-slate-100 flex items-center gap-2">
+                        <!-- Dynamic Title -->
+                    </h3>
+                    <span id="category-counter" class="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-700 rounded-full font-medium text-slate-600 dark:text-slate-300">
+                        0/0 Tercentang
+                    </span>
+                </div>
+
+                <!-- Questions List Container -->
+                <div id="questions-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <!-- Dynamic Checklist Items -->
+                </div>
+
+                <!-- Form Action Navigation Buttons -->
+                <div class="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <button id="prev-cat-btn" onclick="prevCategory()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Kategori Sebelumnya
+                    </button>
+
+                    <button id="next-cat-btn" onclick="nextCategory()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 transition flex items-center gap-2">
+                        Kategori Selanjutnya <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                    <button id="submit-dcm-btn" onclick="submitDCMForm()" class="hidden px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Simpan & Kirim Jawaban
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: DASHBOARD KONSELOR (ANALISIS DATA) -->
+        <section id="tab-guru" class="tab-content hidden space-y-6">
+            <!-- Filter Bar -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-navy-800 dark:text-slate-100">Dashboard Analisis BK</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Ringkasan Tabulasi Data DCM & Identifikasi Kebutuhan Layanan</p>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <select id="filter-class" onchange="updateDashboardData()" class="px-3 py-2 rounded-xl text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100">
+                        <option value="ALL">Semua Kelas (Paralel)</option>
+                        <option value="VII A" selected>Kelas VII A</option>
+                        <option value="VII B">Kelas VII B</option>
+                    </select>
+
+                    <button onclick="exportReportModal()" class="px-4 py-2 rounded-xl bg-navy-800 hover:bg-navy-900 text-white text-xs font-semibold shadow flex items-center gap-2 transition">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i> Ekspor Excel Per Kelas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analytics Key Indicators Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                    <div class="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-xl">
+                        <i class="fa-solid fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Total Responden</p>
+                        <h4 class="text-xl font-bold" id="card-total-siswa">0 Siswa</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                    <div class="p-3 bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Masalah Tertinggi</p>
+                        <h4 class="text-xl font-bold" id="card-top-problem">Belajar (28%)</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                    <div class="p-3 bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 rounded-xl">
+                        <i class="fa-solid fa-user-shield text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Siswa Prioritas</p>
+                        <h4 class="text-xl font-bold" id="card-priority-count">0 Siswa</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                    <div class="p-3 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Status Sinkron</p>
+                        <h4 class="text-xl font-bold text-emerald-600">100% Terunggah</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Bidang Masalah Terbanyak -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-teal-600"></i> Persentase Masalah Per Bidang (Profil Kelas)
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Top Item Masalah Paling Sering Muncul -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ol text-teal-600"></i> 5 Butir Masalah Paling Dominan
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="topItemsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Individual Profile & Tabulation Table -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-table text-teal-600"></i> Tabulasi & Profil Individual Siswa
+                    </h3>
+                    <span class="text-xs text-slate-500">Klik siswa untuk melihat detail profil individual</span>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
+                                <th class="p-3 font-semibold rounded-l-xl">Nama Siswa</th>
+                                <th class="p-3 font-semibold">Kelas</th>
+                                <th class="p-3 font-semibold">JK</th>
+                                <th class="p-3 font-semibold text-center">Jumlah Problem</th>
+                                <th class="p-3 font-semibold">Bidang Dominan</th>
+                                <th class="p-3 font-semibold">Tingkat Prioritas</th>
+                                <th class="p-3 font-semibold text-right rounded-r-xl">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: GENERATOR PROGRAM BK & RPLBK (FITUR BARU) -->
+        <section id="tab-program" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-navy-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-file-signature text-teal-600"></i>
+                        Penyusunan Program BK & RPLBK Otomatis
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Menyusun Program Tahunan/Semesteran BK serta Rencana Pelaksanaan Layanan BK (RPLBK) berdasarkan asesmen kebutuhan DCM.
+                    </p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="generateProgramBK()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Sinkron Program Berdasarkan DCM
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sub Navigation Tabs untuk Program & RPLBK -->
+            <div class="flex space-x-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <button id="subtab-btn-progbk" onclick="switchProgramSubtab('progbk')" class="px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white transition">
+                    <i class="fa-solid fa-list-ol mr-1.5"></i> Matriks Program BK (Berdasarkan DCM)
+                </button>
+                <button id="subtab-btn-rpl" onclick="switchProgramSubtab('rpl')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-file-lines mr-1.5"></i> Generator RPLBK (Bimbingan Klasikal/Kelompok)
+                </button>
+            </div>
+
+            <!-- SUB-TAB 1: MATRIKS PROGRAM BK -->
+            <div id="subtab-progbk" class="space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                    <div class="flex justify-between items-center flex-wrap gap-2">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-teal-600"></i> Matriks Pemetaan Program Pelayanan BK
+                        </h3>
+                        <button onclick="exportProgramToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel"></i> Cetak Program ke Excel
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
+                                    <th class="p-3 font-semibold rounded-l-xl">Bidang Layanan</th>
+                                    <th class="p-3 font-semibold">Rumusan Kebutuhan (Data DCM)</th>
+                                    <th class="p-3 font-semibold">Topik / Tema Layanan</th>
+                                    <th class="p-3 font-semibold">Jenis Layanan</th>
+                                    <th class="p-3 font-semibold">Alokasi Waktu</th>
+                                    <th class="p-3 font-semibold text-right rounded-r-xl">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="program-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                <!-- Dynamic generated Program rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 2: GENERATOR RPLBK -->
+            <div id="subtab-rpl" class="hidden space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Form Input Penyusunan RPLBK -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <h3 class="font-bold text-navy-800 dark:text-slate-100 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-pen-ruler text-teal-600"></i> Parameter Form RPLBK
+                        </h3>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block font-semibold mb-1">Pilih Tema Layanan (Dari DCM)</label>
+                                <select id="rpl-theme-select" onchange="generateRPLDocument()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none">
+                                    <option value="belajar">Strategi Belajar Efektif & Mengatasi Kejenuhan (Bidang Belajar)</option>
+                                    <option value="gadget">Manajemen Waktu & Cegah Kecanduan Gadget/Medsos (Bidang Rekreasi/Pribadi)</option>
+                                    <option value="bullying">Stop Bullying: Membangun Pertemanan Sehat (Bidang Sosial)</option>
+                                    <option value="karir">Mengenal Minat, Bakat & Cita-Cita Masa Depan (Bidang Karir)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold mb-1">Jenis Layanan BK</label>
+                                <select id="rpl-service-type" onchange="generateRPLDocument()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                                    <option value="Bimbingan Klasikal">Bimbingan Klasikal</option>
+                                    <option value="Bimbingan Kelompok">Bimbingan Kelompok</option>
+                                    <option value="Konseling Kelompok">Konseling Kelompok</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold mb-1">Sasaran Kelas</label>
+                                <input type="text" id="rpl-target-class" onchange="generateRPLDocument()" value="Kelas VII (Fase D)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold mb-1">Alokasi Waktu</label>
+                                <input type="text" id="rpl-duration" onchange="generateRPLDocument()" value="2 x 40 Menit (1 Pertemuan)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold mb-1">Metode / Model Layanan</label>
+                                <input type="text" id="rpl-method" onchange="generateRPLDocument()" value="Problem Based Learning (PBL) / Experiential Learning" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                            </div>
+
+                            <button onclick="generateRPLDocument()" class="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-gears"></i> Perbarui Draf RPLBK
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preview Dokumen RPLBK -->
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-file-contract text-teal-600"></i> Pratinjau Lembar RPLBK
+                            </h3>
+                            <button onclick="printRPLBK()" class="px-3 py-1.5 bg-navy-800 hover:bg-navy-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-print text-amber-400"></i> Cetak / Simpan PDF
+                            </button>
+                        </div>
+
+                        <!-- Printable RPL Document Area -->
+                        <div id="rpl-preview-card" class="p-6 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs space-y-4 font-sans leading-relaxed">
+                            <div class="text-center border-b border-slate-300 dark:border-slate-700 pb-3">
+                                <h4 class="font-bold text-sm uppercase tracking-wide">RENCANA PELAKSANAAN LAYANAN BIMBINGAN DAN KONSELING (RPLBK)</h4>
+                                <p class="text-slate-500">SATUAN PENDIDIKAN: MTs NEGERI 7 TASIKMALAYA — TAHUN PELAJARAN 2026/2027</p>
+                            </div>
+
+                            <div id="rpl-content-body" class="space-y-3">
+                                <!-- Dynamic RPL Content Generated via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: KELOLA INSTRUMEN & DATA -->
+        <section id="tab-kelola" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-navy-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-teal-600"></i>
+                        Pusat Pengelolaan Data & Custom Instrumen DCM
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Konselor/Guru BK dapat menambah/menghapus data siswa, serta menyesuaikan butir instrumen DCM sesuai kondisi aktual konseli.
+                    </p>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="openModalAddStudent()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus"></i> Tambah Siswa Manual
+                    </button>
+                    <button onclick="openModalImportStudent()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-import"></i> Impor Excel Siswa
+                    </button>
+                    <button onclick="openModalAddQuestion()" class="px-4 py-2 bg-navy-800 hover:bg-navy-900 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-plus"></i> Tambah Soal DCM
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sub Navigation Tabs for Counselor Management -->
+            <div class="flex space-x-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <button id="subtab-btn-inst" onclick="switchKelolaSubtab('inst')" class="px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white transition">
+                    <i class="fa-solid fa-list-check mr-1.5"></i> Pengaturan Butir DCM
+                </button>
+                <button id="subtab-btn-presets" onclick="switchKelolaSubtab('presets')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Bank Presets Relevan
+                </button>
+                <button id="subtab-btn-siswa" onclick="switchKelolaSubtab('siswa')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-users-gear mr-1.5"></i> Manajemen Data Siswa
+                </button>
+            </div>
+
+            <!-- SUB-TAB 1: PENGATURAN BUTIR DCM -->
+            <div id="subtab-inst" class="space-y-4">
+                <div class="flex items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">Pilih Kategori:</label>
+                        <select id="manage-category-select" onchange="renderManageQuestionsList()" class="px-3 py-1.5 rounded-xl text-xs border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 w-full">
+                            <!-- Dynamic category options -->
+                        </select>
+                    </div>
+
+                    <button onclick="resetInstrumentsToDefault()" class="px-3 py-1.5 text-xs text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 rounded-xl font-medium transition whitespace-nowrap">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset Soal ke Default
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm" id="manage-cat-header-title">
+                            Daftar Soal Kategori
+                        </h3>
+                        <span id="manage-item-count" class="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">0 Butir</span>
+                    </div>
+
+                    <div id="manage-questions-list" class="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <!-- Dynamic list of editable questions -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 2: BANK PRESETS RELEVAN -->
+            <div id="subtab-presets" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="font-bold text-navy-800 dark:text-slate-100 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-amber-500"></i> Inject Preset Soal Relevan Kekinian
+                    </h3>
+                    <p class="text-xs text-slate-500">Tambahkan sekumpulan butir masalah kontekstual yang sering dialami siswa saat ini dalam satu klik:</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                        <!-- Preset 1 -->
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-3 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold text-sm mb-1">
+                                    <i class="fa-solid fa-mobile-screen"></i>
+                                    <span>Kecanduan Gadget & Medsos</span>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed">Meliputi masalah siber, sulit lepas dari game online, begadang medsos, dan penurunan konsentrasi.</p>
+                            </div>
+                            <button onclick="applyPreset('gadget')" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Tambahkan ke Instrumen
+                            </button>
+                        </div>
+
+                        <!-- Preset 2 -->
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-3 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center space-x-2 text-rose-600 dark:text-rose-400 font-bold text-sm mb-1">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <span>Isu Bullying & Cyberbullying</span>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed">Soal tentang perundungan verbal, fisik, cemas datang ke sekolah, dan pengucilan di media sosial.</p>
+                            </div>
+                            <button onclick="applyPreset('bullying')" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Tambahkan ke Instrumen
+                            </button>
+                        </div>
+
+                        <!-- Preset 3 -->
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-3 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center space-x-2 text-purple-600 dark:text-purple-400 font-bold text-sm mb-1">
+                                    <i class="fa-solid fa-brain"></i>
+                                    <span>Stres Belajar & Kurikulum</span>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed">Kesulitan pengerjaan tugas proyek kelompok, kecemasan ujian asesmen, dan kejenuhan belajar.</p>
+                            </div>
+                            <button onclick="applyPreset('learning_stress')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Tambahkan ke Instrumen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 3: MANAJEMEN DATA SISWA -->
+            <div id="subtab-siswa" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base">
+                            <i class="fa-solid fa-users text-teal-600 mr-2"></i>Daftar Seluruh Data Siswa Responden
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="search-student-input" onkeyup="filterManageStudentTable()" placeholder="Cari nama siswa..." class="px-3 py-1.5 rounded-xl text-xs border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none">
+                            <button onclick="openModalImportStudent()" class="px-3 py-1.5 text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 rounded-xl font-semibold transition">
+                                <i class="fa-solid fa-file-excel mr-1"></i> Impor Excel
+                            </button>
+                            <button onclick="openConfirmDeleteAllStudents()" class="px-3 py-1.5 text-xs text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 rounded-xl font-semibold transition">
+                                <i class="fa-solid fa-trash-can mr-1"></i> Hapus Semua Data
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
+                                    <th class="p-3 font-semibold rounded-l-xl">ID / NISN</th>
+                                    <th class="p-3 font-semibold">Nama Siswa</th>
+                                    <th class="p-3 font-semibold">Kelas</th>
+                                    <th class="p-3 font-semibold">JK</th>
+                                    <th class="p-3 font-semibold text-center">Jumlah Problem</th>
+                                    <th class="p-3 font-semibold">Bidang Dominan</th>
+                                    <th class="p-3 font-semibold text-right rounded-r-xl">Opsi Kelola</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manage-student-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: STATUS SISTEM & OFFLINE SYNC MANAGER -->
+        <section id="tab-sync" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h2 class="text-xl font-bold text-navy-800 dark:text-slate-100 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-server text-teal-600"></i>
+                    Pengelola Penyimpanan & Antrean Offline (IndexedDB Engine)
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    Aplikasi ini menggunakan teknologi **PWA (Progressive Web App)** dan **IndexedDB Browser Engine**. Data yang diisi siswa saat kondisi offline disimpan di database browser lokal dan akan disinkronisasikan secara otomatis saat terhubung kembali ke server.
+                </p>
+            </div>
+
+            <!-- Storage & Sync Status Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Local Queue Status -->
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-box-archive text-amber-500"></i> Antrean Data Lokal (Unsynced)
+                        </h3>
+                        <span id="queue-badge-count" class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">0 Data</span>
+                    </div>
+
+                    <div id="queue-empty-msg" class="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl text-center text-xs text-slate-500">
+                        <i class="fa-solid fa-circle-check text-emerald-500 text-2xl mb-1 block"></i>
+                        Semua data telah tersinkronisasi sempurna dengan server.
+                    </div>
+
+                    <div id="queue-list" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar hidden">
+                        <!-- Dynamic items -->
+                    </div>
+
+                    <div class="pt-2 flex gap-3">
+                        <button onclick="syncOfflineData()" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate"></i> Sinkronkan Data Sekarang
+                        </button>
+                        <button onclick="clearLocalStore()" class="px-3 py-2.5 bg-slate-100 dark:bg-slate-700 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl text-xs font-semibold transition">
+                            Hapus Cache
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PWA Service Worker Health Info -->
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-teal-600"></i> Status PWA & Kapabilitas Offline
+                    </h3>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+                            <span class="text-slate-600 dark:text-slate-300">Status Jaringan Simulasi</span>
+                            <span id="sys-net-status" class="font-bold text-emerald-600">Online</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+                            <span class="text-slate-600 dark:text-slate-300">Service Worker Engine</span>
+                            <span id="sw-status-text" class="font-semibold text-teal-600">Aktif & Terdaftar</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+                            <span class="text-slate-600 dark:text-slate-300">Database Offline (IndexedDB)</span>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200">Tersedia (DCM_Offline_DB)</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/40 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <span>Gunakan tombol Simulasi Network di kanan atas navbar untuk menguji pengisian DCM saat kondisi tanpa sinyal.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL 1: PROFIL INDIVIDUAL SISWA -->
+    <div id="modal-individual" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar p-6 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-navy-800 dark:text-slate-100" id="modal-student-name">Nama Siswa</h3>
+                    <p class="text-xs text-slate-500" id="modal-student-info">Kelas VII A | NISN: 0081234567</p>
+                </div>
+                <button onclick="closeModal('modal-individual')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                        <p class="text-xs text-slate-500">Total Masalah Terpilih</p>
+                        <span id="modal-total-count" class="text-xl font-bold text-teal-600">0 Items</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                        <p class="text-xs text-slate-500">Kategori Paling Masalah</p>
+                        <span id="modal-top-category" class="text-xl font-bold text-rose-500">-</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2">Rincian Per Kategori</h4>
+                    <div id="modal-category-breakdown" class="space-y-2 text-xs">
+                        <!-- Dynamic Breakdown Items -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+                <button onclick="closeModal('modal-individual')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold">Tutup</button>
+                <button onclick="simulatePrint()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Cetak Lembar Konseling
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: TAMBAH SISWA MANUAL -->
+    <div id="modal-add-student" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-navy-800 dark:text-slate-100"><i class="fa-solid fa-user-plus text-teal-600 mr-2"></i>Tambah Data Siswa</h3>
+                <button onclick="closeModal('modal-add-student')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Nama Lengkap Siswa</label>
+                    <input type="text" id="input-new-name" placeholder="misal: Raihan Kurnia" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">Kelas</label>
+                        <select id="input-new-class" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                            <option value="VII A">VII A</option>
+                            <option value="VII B">VII B</option>
+                            <option value="VII C">VII C</option>
+                            <option value="VIII A">VIII A</option>
+                            <option value="IX A">IX A</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Jenis Kelamin</label>
+                        <select id="input-new-gender" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                            <option value="L">Laki-Laki (L)</option>
+                            <option value="P">Perempuan (P)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">Jumlah Masalah</label>
+                        <input type="number" id="input-new-count" value="5" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Bidang Dominan</label>
+                        <select id="input-new-topcat" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                            <option value="Belajar (IX)">Belajar (IX)</option>
+                            <option value="Pribadi (VI)">Pribadi (VI)</option>
+                            <option value="Sosial (VII)">Sosial (VII)</option>
+                            <option value="Ekonomi (II)">Ekonomi (II)</option>
+                            <option value="Kesehatan (I)">Kesehatan (I)</option>
+                            <option value="Karir (X)">Karir (X)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('modal-add-student')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-xs font-semibold">Batal</button>
+                <button onclick="saveNewStudentManual()" class="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: TAMBAH/EDIT SOAL DCM -->
+    <div id="modal-add-question" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-navy-800 dark:text-slate-100" id="modal-q-title"><i class="fa-solid fa-circle-plus text-teal-600 mr-2"></i>Tambah Butir Masalah DCM</h3>
+                <button onclick="closeModal('modal-add-question')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <input type="hidden" id="edit-q-id" value="">
+                <div>
+                    <label class="block font-semibold mb-1">Kategori Masalah</label>
+                    <select id="modal-q-category" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700">
+                        <!-- Dynamic Categories -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Pernyataan Masalah (Sesuai Kondisi Konseli)</label>
+                    <textarea id="modal-q-text" rows="3" placeholder="Tuliskan butir masalah secara lugas..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none"></textarea>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('modal-add-question')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-xs font-semibold">Batal</button>
+                <button onclick="saveQuestionItem()" class="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold">Simpan Soal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: EKSPOR REKAP LAPORAN EXCEL PER KELAS -->
+    <div id="modal-export-excel" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-navy-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-file-excel text-emerald-600 text-lg"></i> Ekspor Laporan DCM ke Excel
+                </h3>
+                <button onclick="closeModal('modal-export-excel')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-200">Pilih Target Kelas</label>
+                    <select id="export-class-select" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none">
+                        <option value="ALL">Semua Kelas (Paralel VII A - VII G)</option>
+                        <option value="VII A">Kelas VII A</option>
+                        <option value="VII B">Kelas VII B</option>
+                        <option value="VII C">Kelas VII C</option>
+                        <option value="VIII A">Kelas VIII A</option>
+                        <option value="IX A">Kelas IX A</option>
+                    </select>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-200 dark:border-slate-600/60 space-y-1">
+                    <p class="font-bold text-slate-700 dark:text-slate-200">Isi Berkas Excel (.xlsx):</p>
+                    <ul class="list-disc list-inside text-slate-500 space-y-0.5">
+                        <li>Sheet 1: Tabulasi Rekap Responden & Prioritas</li>
+                        <li>Sheet 2: Analisis Butir DCM & Frekuensi Per Soal</li>
+                        <li>Sheet 3: Ringkasan Kebutuhan Layanan BK</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('modal-export-excel')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300">Batal</button>
+                <button onclick="triggerExcelDownload()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20">
+                    <i class="fa-solid fa-download"></i> Unduh File Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: IMPOR DATA SISWA DARI FILE EXCEL -->
+    <div id="modal-import-excel" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-navy-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-file-import text-teal-600 text-lg"></i> Impor Daftar Siswa via Excel
+                </h3>
+                <button onclick="closeModal('modal-import-excel')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-200">Pilih File Excel (.xlsx / .xls / .csv)</label>
+                    <input type="file" id="import-student-file-input" accept=".xlsx, .xls, .csv" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 dark:file:bg-slate-700 dark:file:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-200">Pengaturan Kelas Import</label>
+                    <select id="import-class-option" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none">
+                        <option value="AUTO">Otomatis Baca dari Kolom "Kelas" di Excel</option>
+                        <option value="VII A">Paksa Pasang ke Kelas VII A</option>
+                        <option value="VII B">Paksa Pasang ke Kelas VII B</option>
+                        <option value="VII C">Paksa Pasang ke Kelas VII C</option>
+                        <option value="VIII A">Paksa Pasang ke Kelas VIII A</option>
+                        <option value="IX A">Paksa Pasang ke Kelas IX A</option>
+                    </select>
+                </div>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-200 dark:border-slate-600/60 space-y-1.5">
+                    <p class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-teal-600"></i> Format Kolom Excel yang Dikenali:
+                    </p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                        Pastikan file Excel Anda memiliki baris header dengan nama kolom berikut:
+                    </p>
+                    <div class="flex flex-wrap gap-1 pt-1">
+                        <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-[10px] font-mono">NISN / ID</span>
+                        <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-[10px] font-mono">Nama Siswa / Nama</span>
+                        <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-[10px] font-mono">Kelas</span>
+                        <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-[10px] font-mono">JK / Jenis Kelamin (L/P)</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-1">
+                    <button onclick="downloadStudentTemplate()" class="text-teal-600 hover:text-teal-700 font-semibold text-xs flex items-center gap-1">
+                        <i class="fa-solid fa-file-arrow-down"></i> Unduh Format Contoh (.xlsx)
+                    </button>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('modal-import-excel')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300">Batal</button>
+                <button onclick="processExcelStudentImport()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md shadow-teal-600/20">
+                    <i class="fa-solid fa-file-import"></i> Proses Impor Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: CUSTOM CONFIRMATION MODAL -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800 dark:text-slate-100" id="confirm-modal-title">Konfirmasi Hapus</h3>
+                <p class="text-xs text-slate-500 mt-1" id="confirm-modal-msg">Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="flex justify-center gap-3 pt-2">
+                <button onclick="closeModal('modal-confirm')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold">Batal</button>
+                <button id="confirm-action-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-navy-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-xs sm:text-sm z-50 transform translate-y-20 opacity-0 transition-all duration-300">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toast-msg">Pesan notifikasi</span>
+    </div>
+
+    <script>
+        // --- 1. INDEXEDDB DATABASE ENGINE ---
+        class DCMOfflineDB {
+            constructor() {
+                this.dbName = 'DCM_Offline_DB';
+                this.dbVersion = 1;
+                this.db = null;
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    request.onerror = (e) => reject('IndexedDB Error: ' + e.target.errorCode);
+                    request.onsuccess = (e) => {
+                        this.db = e.target.result;
+                        resolve(this.db);
+                    };
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('submissions')) {
+                            const store = db.createObjectStore('submissions', { keyPath: 'id' });
+                            store.createIndex('synced', 'synced', { unique: false });
+                            store.createIndex('submittedAt', 'submittedAt', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            async saveSubmission(data) {
+                if (!this.db) await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['submissions'], 'readwrite');
+                    const store = tx.objectStore('submissions');
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e);
+                });
+            }
+
+            async clearAll() {
+                if (!this.db) await this.init();
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction(['submissions'], 'readwrite');
+                    const store = tx.objectStore('submissions');
+                    const request = store.clear();
+                    request.onsuccess = () => resolve(true);
+                });
+            }
+        }
+
+        const dbEngine = new DCMOfflineDB();
+
+        // Register Service Worker Dynamically
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'dcm-pwa-v3';
+                self.addEventListener('install', (e) => self.skipWaiting());
+                self.addEventListener('activate', (e) => self.clients.claim());
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl)
+                .then(() => console.log('Service Worker Registered Successfully'))
+                .catch(err => console.log('SW Reg Error: ', err));
+        }
+
+        // --- 2. DCM QUESTION DATA & CATEGORIES ---
+        const DEFAULT_DCM_CATEGORIES = [
+            { id: "I", title: "I. Kesehatan", icon: "fa-heart-pulse", color: "text-rose-500" },
+            { id: "II", title: "II. Keadaan Ekonomi", icon: "fa-wallet", color: "text-emerald-500" },
+            { id: "III", title: "III. Kehidupan Keluarga", icon: "fa-house-chimney", color: "text-amber-500" },
+            { id: "IV", title: "IV. Agama & Moral", icon: "fa-hands-praying", color: "text-purple-500" },
+            { id: "V", title: "V. Rekreasi & Hobi", icon: "fa-gamepad", color: "text-blue-500" },
+            { id: "VI", title: "VI. Hubungan Pribadi", icon: "fa-user-gear", color: "text-indigo-500" },
+            { id: "VII", title: "VII. Kehidupan Sosial", icon: "fa-users-line", color: "text-teal-500" },
+            { id: "VIII", title: "VIII. Muda-Mudi", icon: "fa-heart", color: "text-pink-500" },
+            { id: "IX", title: "IX. Penyesuaian Sekolah", icon: "fa-school", color: "text-orange-500" },
+            { id: "X", title: "X. Masa Depan & Karir", icon: "fa-briefcase", color: "text-cyan-500" }
+        ];
+
+        const DEFAULT_DCM_QUESTIONS = {
+            "I": [
+                { id: "I_1", text: "Sering merasa sakit kepala atau pusing saat belajar", active: true },
+                { id: "I_2", text: "Mudah merasa lelah dan lemas saat aktivitas sekolah", active: true },
+                { id: "I_3", text: "Memiliki gangguan penglihatan (mata kurang jelas)", active: true },
+                { id: "I_4", text: "Sering tidak nafsu makan / masalah pencernaan", active: true }
+            ],
+            "II": [
+                { id: "II_1", text: "Uang saku sekolah merasa sangat kurang", active: true },
+                { id: "II_2", text: "Khawatir tidak bisa membeli perlengkapan sekolah", active: true },
+                { id: "II_3", text: "Khawatir terhadap kemampuan finansial orang tua", active: true }
+            ],
+            "III": [
+                { id: "III_1", text: "Orang tua sering bertengkar di rumah", active: true },
+                { id: "III_2", text: "Kurang mendapat perhatian/kasih sayang dari orang tua", active: true },
+                { id: "III_3", text: "Rumah terlalu bising/sempit untuk belajar tenang", active: true }
+            ],
+            "IV": [
+                { id: "IV_1", text: "Sering terlambat atau malas menjalankan ibadah", active: true },
+                { id: "IV_2", text: "Kadang merasa ragu dengan tindakan moral diri sendiri", active: true }
+            ],
+            "V": [
+                { id: "V_1", text: "Tidak memiliki waktu luang untuk menyalurkan hobi", active: true },
+                { id: "V_2", text: "Terlalu banyak menghabiskan waktu bermain game/medsos", active: true }
+            ],
+            "VI": [
+                { id: "VI_1", text: "Mudah marah atau emosi tidak terkontrol", active: true },
+                { id: "VI_2", text: "Sering merasa minder dan kurang percaya diri", active: true },
+                { id: "VI_3", text: "Sulit mengambil keputusan sendiri", active: true }
+            ],
+            "VII": [
+                { id: "VII_1", text: "Merasa sulit mendapatkan teman akrab di sekolah", active: true },
+                { id: "VII_2", text: "Sering merasa diasingkan atau dibully teman", active: true },
+                { id: "VII_3", text: "Sukar menyesuaikan diri dalam kelompok", active: true }
+            ],
+            "VIII": [
+                { id: "VIII_1", text: "Malu atau canggung berteman dengan lawan jenis", active: true },
+                { id: "VIII_2", text: "Merasa terganggu oleh pikiran masalah percintaan", active: true }
+            ],
+            "IX": [
+                { id: "IX_1", text: "Sukar memahami pelajaran tertentu (Matematika/B. Inggris)", active: true },
+                { id: "IX_2", text: "Takut menghadapi guru atau tes/ujian", active: true },
+                { id: "IX_3", text: "Sering menunda pengerjaan tugas rumah (PR)", active: true }
+            ],
+            "X": [
+                { id: "X_1", text: "Bingung memilih sekolah lanjutan setelah lulus", active: true },
+                { id: "X_2", text: "Belum mengetahui cita-cita atau minat bakat diri", active: true }
+            ]
+        };
+
+        let DCM_CATEGORIES = JSON.parse(localStorage.getItem('dcm_custom_categories')) || DEFAULT_DCM_CATEGORIES;
+        let DCM_QUESTIONS = JSON.parse(localStorage.getItem('dcm_custom_questions')) || DEFAULT_DCM_QUESTIONS;
+
+        // --- 3. GLOBAL STATE & INITIAL DATA ---
+        let currentCategoryIdx = 0;
+        let selectedAnswers = new Set();
+        let isOnline = true;
+        let offlineQueue = [];
+        let categoryChartInstance = null;
+        let topItemsChartInstance = null;
+
+        let mockClassStudents = JSON.parse(localStorage.getItem('dcm_student_list')) || [
+            { id: "001", name: "Ahmad Fauzi", class: "VII A", gender: "L", count: 8, topCat: "Belajar (IX)", priority: "Sedang" },
+            { id: "002", name: "Siti Rahmawati", class: "VII A", gender: "P", count: 14, topCat: "Pribadi (VI)", priority: "Tinggi" },
+            { id: "003", name: "Budi Santoso", class: "VII A", gender: "L", count: 3, topCat: "Kesehatan (I)", priority: "Rendah" },
+            { id: "004", name: "Dewi Lestari", class: "VII A", gender: "P", count: 11, topCat: "Ekonomi (II)", priority: "Tinggi" },
+            { id: "005", name: "Muhammad Rizky", class: "VII A", gender: "L", count: 5, topCat: "Karir (X)", priority: "Sedang" },
+            { id: "006", name: "Anisa Fitriani", class: "VII B", gender: "P", count: 12, topCat: "Belajar (IX)", priority: "Tinggi" },
+            { id: "007", name: "Fajar Pratama", class: "VII B", gender: "L", count: 6, topCat: "Sosial (VII)", priority: "Sedang" }
+        ];
+
+        let defaultProgramBK = [
+            { bidang: "Belajar (IX)", kebutuhan: "Kebutuhan meningkatkan konsentrasi dan pemahaman belajar", tema: "Strategi Belajar Efektif & Mengatasi Kejenuhan", jenis: "Bimbingan Klasikal", waktu: "2 JP (Semester 1)" },
+            { bidang: "Rekreasi / Pribadi (V/VI)", kebutuhan: "Kebutuhan pengelolaan waktu screen-time dan kecanduan gadget", tema: "Manajemen Waktu & Wise Social Media", jenis: "Bimbingan Klasikal", waktu: "2 JP (Semester 1)" },
+            { bidang: "Sosial (VII)", kebutuhan: "Kebutuhan pencegahan perundungan dan pengucilan dalam pertemanan", tema: "Stop Bullying: Membangun Pertemanan Sehat", jenis: "Bimbingan Kelompok", waktu: "2 JP (Semester 1)" },
+            { bidang: "Karir (X)", kebutuhan: "Kebutuhan pemahaman minat bakat serta sekolah lanjutan", tema: "Mengenal Minat, Bakat & Cita-Cita Masa Depan", jenis: "Bimbingan Klasikal", waktu: "2 JP (Semester 2)" },
+            { bidang: "Kesehatan (I)", kebutuhan: "Kebutuhan stamina tubuh dan menjaga kebiasaan hidup sehat", tema: "Menjaga Kesehatan Fisik & Mental Remaja", jenis: "Papan Bimbingan / Infografis", waktu: "Pengkondisian" }
+        ];
+
+        window.onload = async function() {
+            await dbEngine.init();
+            renderCategoryPills();
+            renderCurrentCategoryQuestions();
+            updateGlobalProgress();
+            initCharts();
+            updateDashboardData();
+            checkLocalStorageQueue();
+            populateCategoryDropdowns();
+            renderManageQuestionsList();
+            renderManageStudentTable();
+            renderProgramTable();
+            generateRPLDocument();
+        };
+
+        // --- NAVIGATION & TAB SWITCHING ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-teal-600', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            activeBtn.classList.add('bg-teal-600', 'text-white');
+            activeBtn.classList.remove('text-slate-300');
+
+            if (tabId === 'guru') {
+                setTimeout(() => {
+                    if (categoryChartInstance) categoryChartInstance.resize();
+                    if (topItemsChartInstance) topItemsChartInstance.resize();
+                }, 100);
+            }
+        }
+
+        function switchProgramSubtab(subId) {
+            document.getElementById('subtab-progbk').classList.add('hidden');
+            document.getElementById('subtab-rpl').classList.add('hidden');
+
+            document.getElementById('subtab-btn-progbk').className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+            document.getElementById('subtab-btn-rpl').className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+
+            document.getElementById(`subtab-${subId}`).classList.remove('hidden');
+            document.getElementById(`subtab-btn-${subId}`).className = "px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white transition";
+        }
+
+        // --- DASHBOARD ANALYTICS LOGIC ---
+        function updateDashboardData() {
+            const classVal = document.getElementById('filter-class').value;
+            let filteredStudents = mockClassStudents;
+
+            if (classVal !== 'ALL') {
+                filteredStudents = mockClassStudents.filter(s => s.class === classVal);
+            }
+
+            document.getElementById('card-total-siswa').innerText = `${filteredStudents.length} Siswa`;
+            const highPriorityCount = filteredStudents.filter(s => s.priority === 'Tinggi').length;
+            document.getElementById('card-priority-count').innerText = `${highPriorityCount} Siswa`;
+
+            renderStudentTable(filteredStudents);
+
+            if (categoryChartInstance && topItemsChartInstance) {
+                if (classVal === 'VII B') {
+                    categoryChartInstance.data.datasets[0].data = [8, 12, 22, 19, 15, 34, 10];
+                    topItemsChartInstance.data.datasets[0].data = [20, 15, 25, 30, 10];
+                } else if (classVal === 'VII A') {
+                    categoryChartInstance.data.datasets[0].data = [12, 18, 15, 24, 10, 28, 20];
+                    topItemsChartInstance.data.datasets[0].data = [35, 22, 18, 15, 10];
+                } else {
+                    categoryChartInstance.data.datasets[0].data = [15, 20, 18, 25, 12, 30, 22];
+                    topItemsChartInstance.data.datasets[0].data = [30, 25, 20, 15, 10];
+                }
+                categoryChartInstance.update();
+                topItemsChartInstance.update();
+            }
+        }
+
+        // --- STUDENT FORM FUNCTIONALITY ---
+        function renderCategoryPills() {
+            const container = document.getElementById('category-pills');
+            container.innerHTML = DCM_CATEGORIES.map((cat, idx) => `
+                <button onclick="goToCategory(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center space-x-1.5 ${idx === currentCategoryIdx ? 'bg-navy-800 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'}">
+                    <i class="fa-solid ${cat.icon} ${cat.color}"></i>
+                    <span>${cat.title}</span>
+                </button>
+            `).join('');
+        }
+
+        function goToCategory(idx) {
+            currentCategoryIdx = idx;
+            renderCategoryPills();
+            renderCurrentCategoryQuestions();
+        }
+
+        function renderCurrentCategoryQuestions() {
+            const cat = DCM_CATEGORIES[currentCategoryIdx];
+            const questions = (DCM_QUESTIONS[cat.id] || []).filter(q => q.active !== false);
+
+            document.getElementById('current-category-title').innerHTML = `
+                <i class="fa-solid ${cat.icon} ${cat.color}"></i> ${cat.title}
+            `;
+
+            const container = document.getElementById('questions-container');
+            if (questions.length === 0) {
+                container.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Belum ada butir soal aktif pada kategori ini.</p>`;
+            } else {
+                container.innerHTML = questions.map(q => {
+                    const isChecked = selectedAnswers.has(q.id);
+                    return `
+                        <label class="p-3.5 rounded-xl border ${isChecked ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-950/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40'} hover:border-teal-400 transition cursor-pointer flex items-start space-x-3">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAnswer('${q.id}')" class="mt-0.5 w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
+                            <span class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-snug">${q.text}</span>
+                        </label>
+                    `;
+                }).join('');
+            }
+
+            updateCategoryCounter();
+            updateNavigationButtons();
+        }
+
+        function toggleAnswer(qId) {
+            if (selectedAnswers.has(qId)) {
+                selectedAnswers.delete(qId);
+            } else {
+                selectedAnswers.add(qId);
+            }
+
+            renderCurrentCategoryQuestions();
+            updateGlobalProgress();
+
+            const statusEl = document.getElementById('auto-save-status');
+            statusEl.innerText = "Menyimpan ke IndexedDB...";
+            setTimeout(() => {
+                statusEl.innerText = "Tersimpan di IndexedDB Perangkat";
+            }, 500);
+        }
+
+        function updateCategoryCounter() {
+            const catId = DCM_CATEGORIES[currentCategoryIdx].id;
+            const questions = (DCM_QUESTIONS[catId] || []).filter(q => q.active !== false);
+            let count = 0;
+            questions.forEach(q => {
+                if (selectedAnswers.has(q.id)) count++;
+            });
+            document.getElementById('category-counter').innerText = `${count}/${questions.length} Tercentang`;
+        }
+
+        function updateGlobalProgress() {
+            const count = selectedAnswers.size;
+            document.getElementById('global-progress-text').innerText = `${count} Problem Tercentang`;
+            const percent = Math.min((count / 30) * 100, 100);
+            document.getElementById('global-progress-bar').style.width = `${percent}%`;
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prev-cat-btn');
+            const nextBtn = document.getElementById('next-cat-btn');
+            const submitBtn = document.getElementById('submit-dcm-btn');
+
+            if (currentCategoryIdx === 0) {
+                prevBtn.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                prevBtn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+
+            if (currentCategoryIdx === DCM_CATEGORIES.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextCategory() {
+            if (currentCategoryIdx < DCM_CATEGORIES.length - 1) {
+                currentCategoryIdx++;
+                renderCategoryPills();
+                renderCurrentCategoryQuestions();
+            }
+        }
+
+        function prevCategory() {
+            if (currentCategoryIdx > 0) {
+                currentCategoryIdx--;
+                renderCategoryPills();
+                renderCurrentCategoryQuestions();
+            }
+        }
+
+        async function submitDCMForm() {
+            const name = document.getElementById('student-name').value || "Siswa Tanpa Nama";
+            const studentClass = document.getElementById('student-class').value;
+            const studentId = document.getElementById('student-id').value;
+
+            const newRecord = {
+                id: Date.now().toString(),
+                name: name,
+                class: studentClass,
+                studentId: studentId,
+                gender: document.getElementById('student-gender').value,
+                count: selectedAnswers.size,
+                topCat: "Belajar (IX)",
+                priority: selectedAnswers.size > 10 ? "Tinggi" : selectedAnswers.size > 5 ? "Sedang" : "Rendah",
+                answers: Array.from(selectedAnswers),
+                synced: isOnline ? 1 : 0,
+                submittedAt: new Date().toLocaleTimeString()
+            };
+
+            await dbEngine.saveSubmission(newRecord);
+
+            mockClassStudents.unshift(newRecord);
+            localStorage.setItem('dcm_student_list', JSON.stringify(mockClassStudents));
+            updateDashboardData();
+            renderManageStudentTable();
+
+            if (isOnline) {
+                showToast("Jawaban berhasil dikirim langsung ke server BK!", "success");
+            } else {
+                offlineQueue.push(newRecord);
+                localStorage.setItem('dcm_offline_queue', JSON.stringify(offlineQueue));
+                updateQueueUI();
+                showToast("Offline Mode: Jawaban tersimpan di IndexedDB browser Anda.", "warning");
+            }
+
+            selectedAnswers.clear();
+            currentCategoryIdx = 0;
+            renderCategoryPills();
+            renderCurrentCategoryQuestions();
+            updateGlobalProgress();
+        }
+
+        // --- PROGRAM BK & RPLBK GENERATOR LOGIC ---
+        function generateProgramBK() {
+            renderProgramTable();
+            generateRPLDocument();
+            showToast("Program BK dan RPLBK berhasil diselaraskan dengan data hasil DCM!", "success");
+        }
+
+        function renderProgramTable() {
+            const tbody = document.getElementById('program-table-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = defaultProgramBK.map((item, idx) => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                    <td class="p-3 font-semibold text-teal-600">${item.bidang}</td>
+                    <td class="p-3 text-slate-700 dark:text-slate-200">${item.kebutuhan}</td>
+                    <td class="p-3 font-medium text-slate-800 dark:text-slate-100">${item.tema}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${item.jenis}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${item.waktu}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="createRPLFromProgram('${item.tema}')" class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 rounded-lg text-xs font-semibold flex items-center gap-1 ml-auto">
+                            <i class="fa-solid fa-file-circle-plus"></i> Buat RPLBK
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function createRPLFromProgram(temaTitle) {
+            switchProgramSubtab('rpl');
+            const select = document.getElementById('rpl-theme-select');
+            if (temaTitle.includes('Belajar')) select.value = 'belajar';
+            else if (temaTitle.includes('Manajemen') || temaTitle.includes('Gadget')) select.value = 'gadget';
+            else if (temaTitle.includes('Bullying')) select.value = 'bullying';
+            else if (temaTitle.includes('Minat') || temaTitle.includes('Karir')) select.value = 'karir';
+            
+            generateRPLDocument();
+        }
+
+        function generateRPLDocument() {
+            const themeKey = document.getElementById('rpl-theme-select').value;
+            const serviceType = document.getElementById('rpl-service-type').value;
+            const targetClass = document.getElementById('rpl-target-class').value;
+            const duration = document.getElementById('rpl-duration').value;
+            const method = document.getElementById('rpl-method').value;
+
+            let themeDetails = {
+                title: "Strategi Belajar Efektif & Mengatasi Kejenuhan Belajar",
+                bidang: "Belajar (IX)",
+                tujuanUmum: "Peserta didik/konseli mampu merancang gaya belajar yang efektif serta mengatasi kejenuhan belajar di sekolah.",
+                tujuanKhusus: [
+                    "Mengidentifikasi faktor penyebab timbulnya rasa jenuh belajar.",
+                    "Menganalisis gaya belajar pribadi yang paling efisien.",
+                    "Menerapkan teknik manajemen waktu belajar yang konsisten."
+                ],
+                materi: "Faktor kelelahan belajar, teknik Pomodoro, pengaturan suasana belajar di rumah, serta strategi mengingat informasi.",
+                langkahKerja: "1. Tahap Awal/Pembentukan (10 Menit): Salam, doa, ice breaking, menyampaikan tujuan layanan.\n2. Tahap Inti (60 Menit): Penayangan slide interaktif, diskusi kelompok studi kasus masalah belajar dari DCM, presentasi hasil diskusi.\n3. Tahap Penutup (10 Menit): Menyimpulkan materi, refleksi diri, dan pengisian lembar evaluasi."
+            };
+
+            if (themeKey === 'gadget') {
+                themeDetails = {
+                    title: "Manajemen Waktu & Penggunaan Gadget/Medsos Secara Bijak",
+                    bidang: "Rekreasi / Pribadi (V/VI)",
+                    tujuanUmum: "Siswa mampu mengontrol durasi penggunaan gawai dan memanfaatkan media sosial secara positif.",
+                    tujuanKhusus: [
+                        "Mengetahui dampak negatif kecanduan game online dan media sosial.",
+                        "Menyusun jadwal kegiatan harian seimbang antara belajar dan rekreasi digital.",
+                        "Memproduksi konten digital yang mengedukasi."
+                    ],
+                    materi: "Dampak siber-addiction, teknik digital detox sederhana, serta pembuatan skala prioritas harian.",
+                    langkahKerja: "1. Tahap Awal (10 Menit): Refleksi singkat penggunaan HP harian.\n2. Tahap Inti (60 Menit): Pemutaran video edukasi dampak begadang HP, menyusun chart daily-routine.\n3. Tahap Penutup (10 Menit): Komitmen diri bersama."
+                };
+            } else if (themeKey === 'bullying') {
+                themeDetails = {
+                    title: "Stop Bullying: Membangun Lingkungan Pertemanan Sehat",
+                    bidang: "Kehidupan Sosial (VII)",
+                    tujuanUmum: "Peserta didik memiliki kesadaran untuk mencegah segala bentuk perundungan fisik/siber di sekolah.",
+                    tujuanKhusus: [
+                        "Memahami jenis-jenis bullying (verbal, fisik, cyberbullying).",
+                        "Menumbuhkan rasa empati antar sesama teman sebaya.",
+                        "Berani melaporkan tindak perundungan kepada Guru BK."
+                    ],
+                    materi: "Definisi bullying, undang-undang ITE terkait siber, serta peran upstander vs bystander.",
+                    langkahKerja: "1. Tahap Awal (10 Menit): Ice breaking 'Senyum Teman'.\n2. Tahap Inti (60 Menit): Roleplaying (simulasi peran) pencegahan bullying di kelas.\n3. Tahap Penutup (10 Menit): Deklarasi Anti Bullying bersama."
+                };
+            } else if (themeKey === 'karir') {
+                themeDetails = {
+                    title: "Mengenal Minat, Bakat, & Cita-Cita Masa Depan",
+                    bidang: "Karir (X)",
+                    tujuanUmum: "Siswa mampu mengenali potensi diri dan pilihan jenjang pendidikan lanjutan pasca MTs.",
+                    tujuanKhusus: [
+                        "Menginventarisasi kelebihan dan minat pribadi.",
+                        "Memahami perbedaan kelanjutan studi MA, SMA, dan SMK.",
+                        "Merencanakan langkah persiapan menuju cita-cita."
+                    ],
+                    materi: "Konsep minat bakat, pemetaan pilihan sekolah lanjutan, serta pengenalan profesi abad 21.",
+                    langkahKerja: "1. Tahap Awal (10 Menit): Game 'Siapa Saya di Masa Depan'.\n2. Tahap Inti (60 Menit): Pengisian Lembar Kerja Potensi Diri & Diskusi Pilihan Sekolah.\n3. Tahap Penutup (10 Menit): Penyimpulan dan motivasi."
+                };
+            }
+
+            const htmlContent = `
+                <table class="w-full border-collapse border border-slate-300 dark:border-slate-700">
+                    <tr>
+                        <td class="p-2 font-bold bg-slate-100 dark:bg-slate-800 w-1/3">Komponen Layanan</td>
+                        <td class="p-2">${serviceType}</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-bold bg-slate-100 dark:bg-slate-800">Bidang Layanan</td>
+                        <td class="p-2">${themeDetails.bidang}</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-bold bg-slate-100 dark:bg-slate-800">Topik / Tema Layanan</td>
+                        <td class="p-2 font-bold text-teal-600">${themeDetails.title}</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-bold bg-slate-100 dark:bg-slate-800">Sasaran / Kelas</td>
+                        <td class="p-2">${targetClass}</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-bold bg-slate-100 dark:bg-slate-800">Alokasi Waktu / Metode</td>
+                        <td class="p-2">${duration} | ${method}</td>
+                    </tr>
+                </table>
+
+                <div class="space-y-1">
+                    <h5 class="font-bold text-slate-800 dark:text-slate-100">A. TUJUAN LAYANAN</h5>
+                    <p><strong>Tujuan Umum:</strong> ${themeDetails.tujuanUmum}</p>
+                    <p><strong>Tujuan Khusus:</strong></p>
+                    <ul class="list-disc list-inside pl-2">
+                        ${themeDetails.tujuanKhusus.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="space-y-1">
+                    <h5 class="font-bold text-slate-800 dark:text-slate-100">B. MATERI LAYANAN</h5>
+                    <p>${themeDetails.materi}</p>
+                </div>
+
+                <div class="space-y-1">
+                    <h5 class="font-bold text-slate-800 dark:text-slate-100">C. LANGKAH-LANGKAH KEGIATAN LAYANAN</h5>
+                    <div class="whitespace-pre-line text-slate-600 dark:text-slate-300">${themeDetails.langkahKerja}</div>
+                </div>
+
+                <div class="space-y-1">
+                    <h5 class="font-bold text-slate-800 dark:text-slate-100">D. EVALUASI</h5>
+                    <p>1. <strong>Evaluasi Proses:</strong> Memperhatikan antusiasme, keaktifan, serta dinamika peserta didik selama layanan.</p>
+                    <p>2. <strong>Evaluasi Hasil:</strong> Pengisian lembar pemahaman diri (Understanding, Comfort, Action) pasca layanan.</p>
+                </div>
+            `;
+
+            document.getElementById('rpl-content-body').innerHTML = htmlContent;
+        }
+
+        function exportProgramToExcel() {
+            if (typeof XLSX === 'undefined') {
+                showToast("Pustaka SheetJS belum siap.", "error");
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const wsData = defaultProgramBK.map((p, i) => ({
+                "No": i + 1,
+                "Bidang Layanan": p.bidang,
+                "Rumusan Kebutuhan": p.kebutuhan,
+                "Topik / Tema Layanan": p.tema,
+                "Jenis Layanan": p.jenis,
+                "Alokasi Waktu": p.waktu
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            ws['!cols'] = [{ wch: 5 }, { wch: 20 }, { wch: 45 }, { wch: 40 }, { wch: 20 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, ws, "Program BK Hasil DCM");
+
+            XLSX.writeFile(wb, "Program_BK_MTsN7_Hasil_DCM.xlsx");
+            showToast("Program BK berhasil diekspor ke Excel!", "success");
+        }
+
+        function printRPLBK() {
+            window.print();
+        }
+
+        // --- COUNSELOR MANAGEMENT LOGIC ---
+        function switchKelolaSubtab(subId) {
+            document.getElementById('subtab-inst').classList.add('hidden');
+            document.getElementById('subtab-presets').classList.add('hidden');
+            document.getElementById('subtab-siswa').classList.add('hidden');
+
+            document.getElementById('subtab-btn-inst').className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+            document.getElementById('subtab-btn-presets').className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+            document.getElementById('subtab-btn-siswa').className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+
+            document.getElementById(`subtab-${subId}`).classList.remove('hidden');
+            document.getElementById(`subtab-btn-${subId}`).className = "px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 text-white transition";
+        }
+
+        function populateCategoryDropdowns() {
+            const manageSel = document.getElementById('manage-category-select');
+            const modalSel = document.getElementById('modal-q-category');
+
+            const options = DCM_CATEGORIES.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+            manageSel.innerHTML = options;
+            modalSel.innerHTML = options;
+        }
+
+        function renderManageQuestionsList() {
+            const catId = document.getElementById('manage-category-select').value || DCM_CATEGORIES[0].id;
+            const category = DCM_CATEGORIES.find(c => c.id === catId);
+            const questions = DCM_QUESTIONS[catId] || [];
+
+            document.getElementById('manage-cat-header-title').innerText = `Daftar Soal Kategori ${category ? category.title : ''}`;
+            document.getElementById('manage-item-count').innerText = `${questions.length} Butir`;
+
+            const container = document.getElementById('manage-questions-list');
+            if (questions.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada butir soal dalam kategori ini.</p>`;
+                return;
+            }
+
+            container.innerHTML = questions.map((q, idx) => `
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600/60 flex items-center justify-between gap-3">
+                    <div class="flex items-start space-x-3 text-xs flex-1">
+                        <span class="font-bold text-slate-400">${idx + 1}.</span>
+                        <p class="text-slate-800 dark:text-slate-100 font-medium ${q.active === false ? 'line-through text-slate-400' : ''}">${q.text}</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleQuestionActive('${catId}', '${q.id}')" title="${q.active === false ? 'Aktifkan' : 'Nonaktifkan'}" class="p-1.5 rounded-lg ${q.active === false ? 'bg-slate-200 text-slate-500' : 'bg-emerald-100 text-emerald-700'} text-xs font-bold">
+                            <i class="fa-solid ${q.active === false ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                        </button>
+                        <button onclick="openModalEditQuestion('${catId}', '${q.id}')" class="p-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs hover:bg-blue-100">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="confirmDeleteQuestion('${catId}', '${q.id}')" class="p-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs hover:bg-rose-100">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleQuestionActive(catId, qId) {
+            const q = DCM_QUESTIONS[catId].find(item => item.id === qId);
+            if (q) {
+                q.active = q.active === false ? true : false;
+                saveInstrumentsToStorage();
+                renderManageQuestionsList();
+                renderCurrentCategoryQuestions();
+                showToast("Status butir soal berhasil diperbarui.", "info");
+            }
+        }
+
+        function openModalAddQuestion() {
+            document.getElementById('modal-q-title').innerHTML = `<i class="fa-solid fa-circle-plus text-teal-600 mr-2"></i>Tambah Butir Masalah DCM`;
+            document.getElementById('edit-q-id').value = "";
+            document.getElementById('modal-q-text').value = "";
+            document.getElementById('modal-add-question').classList.remove('hidden');
+        }
+
+        function openModalEditQuestion(catId, qId) {
+            const q = DCM_QUESTIONS[catId].find(item => item.id === qId);
+            if (!q) return;
+
+            document.getElementById('modal-q-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-teal-600 mr-2"></i>Edit Butir Masalah DCM`;
+            document.getElementById('edit-q-id').value = q.id;
+            document.getElementById('modal-q-category').value = catId;
+            document.getElementById('modal-q-text').value = q.text;
+            document.getElementById('modal-add-question').classList.remove('hidden');
+        }
+
+        function saveQuestionItem() {
+            const qId = document.getElementById('edit-q-id').value;
+            const catId = document.getElementById('modal-q-category').value;
+            const text = document.getElementById('modal-q-text').value.trim();
+
+            if (!text) {
+                showToast("Pernyataan masalah tidak boleh kosong!", "error");
+                return;
+            }
+
+            if (!DCM_QUESTIONS[catId]) DCM_QUESTIONS[catId] = [];
+
+            if (qId) {
+                const q = DCM_QUESTIONS[catId].find(item => item.id === qId);
+                if (q) q.text = text;
+            } else {
+                const newId = `${catId}_${Date.now()}`;
+                DCM_QUESTIONS[catId].push({ id: newId, text: text, active: true });
+            }
+
+            saveInstrumentsToStorage();
+            closeModal('modal-add-question');
+            renderManageQuestionsList();
+            renderCurrentCategoryQuestions();
+            showToast("Butir instrumen DCM berhasil disimpan!", "success");
+        }
+
+        function confirmDeleteQuestion(catId, qId) {
+            openConfirmModal("Hapus Butir Soal", "Apakah Anda yakin ingin menghapus butir soal instrumen ini?", () => {
+                DCM_QUESTIONS[catId] = DCM_QUESTIONS[catId].filter(q => q.id !== qId);
+                saveInstrumentsToStorage();
+                renderManageQuestionsList();
+                renderCurrentCategoryQuestions();
+                showToast("Butir soal berhasil dihapus.", "info");
+            });
+        }
+
+        function applyPreset(presetKey) {
+            if (presetKey === 'gadget') {
+                if (!DCM_QUESTIONS["V"]) DCM_QUESTIONS["V"] = [];
+                DCM_QUESTIONS["V"].push(
+                    { id: `V_P1_${Date.now()}`, text: "Sering begadang malam karena keasyikan bermain game online/HP", active: true },
+                    { id: `V_P2_${Date.now()}`, text: "Lupa waktu shalat dan belajar akibat terlalu lama scroll sosial media (TikTok/IG)", active: true }
+                );
+                showToast("Preset 'Kecanduan Gadget & Medsos' berhasil ditambahkan ke Kategori V!", "success");
+            } else if (presetKey === 'bullying') {
+                if (!DCM_QUESTIONS["VII"]) DCM_QUESTIONS["VII"] = [];
+                DCM_QUESTIONS["VII"].push(
+                    { id: `VII_P1_${Date.now()}`, text: "Sering diejek, dihina, atau dipalak oleh teman di kelas", active: true },
+                    { id: `VII_P2_${Date.now()}`, text: "Sering dihujat atau dikucilkan di grup percakapan online/sosial media", active: true }
+                );
+                showToast("Preset 'Bullying & Cyberbullying' berhasil ditambahkan ke Kategori VII!", "success");
+            } else if (presetKey === 'learning_stress') {
+                if (!DCM_QUESTIONS["IX"]) DCM_QUESTIONS["IX"] = [];
+                DCM_QUESTIONS["IX"].push(
+                    { id: `IX_P1_${Date.now()}`, text: "Stres dan pusing menyelesaikan tugas-tugas proyek Kurikulum", active: true },
+                    { id: `IX_P2_${Date.now()}`, text: "Merasa sangat cemas dan takut tidak lulus Asesmen Sekolah", active: true }
+                );
+                showToast("Preset 'Stres Belajar & Kurikulum' berhasil ditambahkan ke Kategori IX!", "success");
+            }
+
+            saveInstrumentsToStorage();
+            renderManageQuestionsList();
+            renderCurrentCategoryQuestions();
+        }
+
+        function resetInstrumentsToDefault() {
+            openConfirmModal("Reset Instrumen", "Kembalikan seluruh soal dan kategori DCM ke pengaturan awal pabrik?", () => {
+                DCM_CATEGORIES = DEFAULT_DCM_CATEGORIES;
+                DCM_QUESTIONS = DEFAULT_DCM_QUESTIONS;
+                localStorage.removeItem('dcm_custom_categories');
+                localStorage.removeItem('dcm_custom_questions');
+                populateCategoryDropdowns();
+                renderManageQuestionsList();
+                renderCategoryPills();
+                renderCurrentCategoryQuestions();
+                showToast("Instrumen DCM berhasil di-reset ke standar default.", "info");
+            });
+        }
+
+        function saveInstrumentsToStorage() {
+            localStorage.setItem('dcm_custom_categories', JSON.stringify(DCM_CATEGORIES));
+            localStorage.setItem('dcm_custom_questions', JSON.stringify(DCM_QUESTIONS));
+        }
+
+        // --- STUDENT DATA MANAGEMENT ---
+        function openModalAddStudent() {
+            document.getElementById('input-new-name').value = "";
+            document.getElementById('modal-add-student').classList.remove('hidden');
+        }
+
+        function saveNewStudentManual() {
+            const name = document.getElementById('input-new-name').value.trim();
+            if (!name) {
+                showToast("Nama siswa wajib diisi!", "error");
+                return;
+            }
+
+            const newStudent = {
+                id: Date.now().toString(),
+                name: name,
+                class: document.getElementById('input-new-class').value,
+                gender: document.getElementById('input-new-gender').value,
+                count: parseInt(document.getElementById('input-new-count').value) || 0,
+                topCat: document.getElementById('input-new-topcat').value,
+                priority: parseInt(document.getElementById('input-new-count').value) > 10 ? "Tinggi" : "Sedang"
+            };
+
+            mockClassStudents.unshift(newStudent);
+            localStorage.setItem('dcm_student_list', JSON.stringify(mockClassStudents));
+
+            updateDashboardData();
+            renderManageStudentTable();
+            closeModal('modal-add-student');
+            showToast("Data siswa baru berhasil ditambahkan!", "success");
+        }
+
+        function renderManageStudentTable() {
+            const tbody = document.getElementById('manage-student-table-body');
+            tbody.innerHTML = mockClassStudents.map(s => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                    <td class="p-3 font-mono text-slate-500">${s.id}</td>
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-100">${s.name}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.class}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.gender}</td>
+                    <td class="p-3 text-center font-bold text-teal-600">${s.count}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.topCat}</td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="openIndividualModal('${s.id}')" class="p-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-lg text-xs" title="Lihat Profil">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button onclick="confirmDeleteStudent('${s.id}')" class="p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs" title="Hapus Siswa">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterManageStudentTable() {
+            const query = document.getElementById('search-student-input').value.toLowerCase();
+            const filtered = mockClassStudents.filter(s => s.name.toLowerCase().includes(query) || s.class.toLowerCase().includes(query));
+
+            const tbody = document.getElementById('manage-student-table-body');
+            tbody.innerHTML = filtered.map(s => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                    <td class="p-3 font-mono text-slate-500">${s.id}</td>
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-100">${s.name}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.class}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.gender}</td>
+                    <td class="p-3 text-center font-bold text-teal-600">${s.count}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.topCat}</td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="openIndividualModal('${s.id}')" class="p-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-lg text-xs">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button onclick="confirmDeleteStudent('${s.id}')" class="p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function confirmDeleteStudent(studentId) {
+            const student = mockClassStudents.find(s => s.id === studentId);
+            openConfirmModal("Hapus Data Siswa", `Hapus permanen data DCM atas nama ${student ? student.name : 'siswa ini'}?`, () => {
+                mockClassStudents = mockClassStudents.filter(s => s.id !== studentId);
+                localStorage.setItem('dcm_student_list', JSON.stringify(mockClassStudents));
+                updateDashboardData();
+                renderManageStudentTable();
+                showToast("Data siswa berhasil dihapus.", "info");
+            });
+        }
+
+        function openConfirmDeleteAllStudents() {
+            openConfirmModal("Hapus Seluruh Data Siswa", "Apakah Anda yakin ingin MENGHAPUS SELURUH data responden siswa?", () => {
+                mockClassStudents = [];
+                localStorage.removeItem('dcm_student_list');
+                updateDashboardData();
+                renderManageStudentTable();
+                showToast("Seluruh data siswa berhasil dibersihkan.", "info");
+            });
+        }
+
+        // --- EXCEL IMPORT LOGIC ---
+        function openModalImportStudent() {
+            document.getElementById('import-student-file-input').value = "";
+            document.getElementById('modal-import-excel').classList.remove('hidden');
+        }
+
+        function downloadStudentTemplate() {
+            if (typeof XLSX === 'undefined') {
+                showToast("Pustaka SheetJS belum siap.", "error");
+                return;
+            }
+
+            const templateData = [
+                { "NISN": "0081112233", "Nama Siswa": "Andi Saputra", "Kelas": "VII A", "Jenis Kelamin": "L" },
+                { "NISN": "0081112234", "Nama Siswa": "Bina Pertiwi", "Kelas": "VII A", "Jenis Kelamin": "P" },
+                { "NISN": "0081112235", "Nama Siswa": "Citra Lestari", "Kelas": "VII B", "Jenis Kelamin": "P" },
+                { "NISN": "0081112236", "Nama Siswa": "Doni Kurniawan", "Kelas": "VII B", "Jenis Kelamin": "L" }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(templateData);
+            ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, ws, "Template Siswa");
+
+            XLSX.writeFile(wb, "Template_Daftar_Siswa_DCM.xlsx");
+            showToast("Template Excel daftar siswa berhasil diunduh.", "success");
+        }
+
+        function processExcelStudentImport() {
+            const fileInput = document.getElementById('import-student-file-input');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showToast("Silakan pilih file Excel terlebih dahulu!", "warning");
+                return;
+            }
+
+            if (typeof XLSX === 'undefined') {
+                showToast("Pustaka SheetJS belum siap.", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    if (!rawJson || rawJson.length === 0) {
+                        showToast("File Excel kosong atau format tidak sesuai!", "error");
+                        return;
+                    }
+
+                    const classOverride = document.getElementById('import-class-option').value;
+                    let importedCount = 0;
+
+                    rawJson.forEach((row, index) => {
+                        const nameKey = Object.keys(row).find(k => /nama/i.test(k)) || "";
+                        const nameVal = String(row[nameKey] || "").trim();
+
+                        if (!nameVal) return;
+
+                        const idKey = Object.keys(row).find(k => /nisn|id|no/i.test(k)) || "";
+                        const idVal = String(row[idKey] || "").trim() || (Date.now() + index).toString();
+
+                        const classKey = Object.keys(row).find(k => /kelas/i.test(k)) || "";
+                        let classVal = String(row[classKey] || "").trim();
+                        if (classOverride !== 'AUTO' || !classVal) {
+                            classVal = classOverride !== 'AUTO' ? classOverride : "VII A";
+                        }
+
+                        const genderKey = Object.keys(row).find(k => /jk|gender|jenis|kelamin/i.test(k)) || "";
+                        let genderVal = String(row[genderKey] || "").trim().toUpperCase();
+                        if (genderVal.startsWith('P') || genderVal.startsWith('PEREMPUAN')) {
+                            genderVal = 'P';
+                        } else {
+                            genderVal = 'L';
+                        }
+
+                        const newStudent = {
+                            id: idVal,
+                            name: nameVal,
+                            class: classVal,
+                            gender: genderVal,
+                            count: 0,
+                            topCat: "Belajar (IX)",
+                            priority: "Rendah",
+                            submittedAt: "Belum Mengisi"
+                        };
+
+                        const existIdx = mockClassStudents.findIndex(s => s.id === idVal || (s.name.toLowerCase() === nameVal.toLowerCase() && s.class === classVal));
+                        if (existIdx >= 0) {
+                            mockClassStudents[existIdx].name = nameVal;
+                            mockClassStudents[existIdx].class = classVal;
+                            mockClassStudents[existIdx].gender = genderVal;
+                        } else {
+                            mockClassStudents.push(newStudent);
+                        }
+
+                        importedCount++;
+                    });
+
+                    localStorage.setItem('dcm_student_list', JSON.stringify(mockClassStudents));
+                    updateDashboardData();
+                    renderManageStudentTable();
+
+                    closeModal('modal-import-excel');
+                    showToast(`Berhasil mengimpor ${importedCount} data siswa!`, "success");
+
+                } catch (err) {
+                    console.error(err);
+                    showToast("Gagal membaca file Excel. Pastikan format file valid.", "error");
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- UTILITY MODAL & TOAST FUNCTIONS ---
+        let currentConfirmCallback = null;
+
+        function openConfirmModal(title, msg, callback) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-msg').innerText = msg;
+            currentConfirmCallback = callback;
+
+            const actionBtn = document.getElementById('confirm-action-btn');
+            actionBtn.onclick = function() {
+                if (currentConfirmCallback) currentConfirmCallback();
+                closeModal('modal-confirm');
+            };
+
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function toggleNetworkStatus() {
+            isOnline = !isOnline;
+            const dot = document.getElementById('net-status-dot');
+            const text = document.getElementById('net-status-text');
+            const btn = document.getElementById('net-toggle-btn');
+            const sysNet = document.getElementById('sys-net-status');
+
+            if (isOnline) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-online";
+                text.innerText = "Online";
+                btn.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition";
+                sysNet.innerText = "Online";
+                sysNet.className = "font-bold text-emerald-600";
+                showToast("Koneksi Internet Pulih! Siap melakukan auto-sync.", "success");
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 pulse-offline";
+                text.innerText = "Offline Mode";
+                btn.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition";
+                sysNet.innerText = "Offline (Terputus)";
+                sysNet.className = "font-bold text-rose-600";
+                showToast("Mode Offline Aktif. Data tersimpan di IndexedDB.", "warning");
+            }
+        }
+
+        function checkLocalStorageQueue() {
+            const saved = localStorage.getItem('dcm_offline_queue');
+            if (saved) {
+                offlineQueue = JSON.parse(saved);
+                updateQueueUI();
+            }
+        }
+
+        function updateQueueUI() {
+            const count = offlineQueue.length;
+            const badge = document.getElementById('sync-badge');
+            const syncCount = document.getElementById('sync-count');
+            const queueBadge = document.getElementById('queue-badge-count');
+            const queueList = document.getElementById('queue-list');
+            const emptyMsg = document.getElementById('queue-empty-msg');
+
+            syncCount.innerText = count;
+            queueBadge.innerText = `${count} Data`;
+
+            if (count > 0) {
+                badge.classList.remove('hidden');
+                emptyMsg.classList.add('hidden');
+                queueList.classList.remove('hidden');
+
+                queueList.innerHTML = offlineQueue.map(item => `
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-bold text-slate-800 dark:text-slate-100">${item.name} (${item.class})</span>
+                            <p class="text-slate-500">${item.count || item.totalCount} Masalah • ${item.submittedAt || 'Baru'}</p>
+                        </div>
+                        <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">Unsynced</span>
+                    </div>
+                `).join('');
+            } else {
+                badge.classList.add('hidden');
+                emptyMsg.classList.remove('hidden');
+                queueList.classList.add('hidden');
+            }
+        }
+
+        function syncOfflineData() {
+            if (!isOnline) {
+                showToast("Gagal: Anda sedang dalam mode Offline. Aktifkan koneksi terlebih dahulu.", "error");
+                return;
+            }
+
+            if (offlineQueue.length === 0) {
+                showToast("Tidak ada data antrean lokal yang perlu disinkronkan.", "info");
+                return;
+            }
+
+            offlineQueue = [];
+            localStorage.removeItem('dcm_offline_queue');
+            updateQueueUI();
+            showToast("Berhasil mengunggah seluruh data dari IndexedDB ke Server BK!", "success");
+        }
+
+        async function clearLocalStore() {
+            offlineQueue = [];
+            localStorage.removeItem('dcm_offline_queue');
+            await dbEngine.clearAll();
+            updateQueueUI();
+            showToast("Cache & IndexedDB lokal berhasil dibersihkan.", "info");
+        }
+
+        function initCharts() {
+            const ctx1 = document.getElementById('categoryChart').getContext('2d');
+            categoryChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Kesehatan', 'Ekonomi', 'Keluarga', 'Pribadi', 'Sosial', 'Belajar', 'Karir'],
+                    datasets: [{
+                        label: '% Masalah Siswa',
+                        data: [12, 18, 15, 24, 10, 28, 20],
+                        backgroundColor: '#14b8a6',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 40 } }
+                }
+            });
+
+            const ctx2 = document.getElementById('topItemsChart').getContext('2d');
+            topItemsChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sulit Memahami Lesson', 'Cepat Lelah/Pusing', 'Bingung Sekolah Lanjutan', 'Minder/Kurang PD', 'Kurang Uang Saku'],
+                    datasets: [{
+                        data: [35, 22, 18, 15, 10],
+                        backgroundColor: ['#0d9488', '#f59e0b', '#3b82f6', '#ec4899', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderStudentTable(data = mockClassStudents) {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = data.map(s => `
+                <tr onclick="openIndividualModal('${s.id}')" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition cursor-pointer">
+                    <td class="p-3 font-semibold text-slate-800 dark:text-slate-100">${s.name}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.class}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.gender}</td>
+                    <td class="p-3 text-center font-bold text-teal-600">${s.count}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${s.topCat}</td>
+                    <td class="p-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${s.priority === 'Tinggi' ? 'bg-rose-100 text-rose-700' : s.priority === 'Sedang' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">
+                            ${s.priority}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button class="p-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-teal-50 text-teal-600 rounded-lg">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openIndividualModal(studentId) {
+            const student = mockClassStudents.find(s => s.id === studentId) || mockClassStudents[0];
+            document.getElementById('modal-student-name').innerText = student.name;
+            document.getElementById('modal-student-info').innerText = `Kelas ${student.class} | JK: ${student.gender}`;
+            document.getElementById('modal-total-count').innerText = `${student.count} Problem`;
+            document.getElementById('modal-top-category').innerText = student.topCat;
+
+            const breakdown = document.getElementById('modal-category-breakdown');
+            breakdown.innerHTML = `
+                <div class="flex justify-between p-2 bg-slate-50 dark:bg-slate-700/30 rounded-lg">
+                    <span>IX. Penyesuaian Sekolah / Belajar</span>
+                    <span class="font-bold text-teal-600">4 Items</span>
+                </div>
+                <div class="flex justify-between p-2 bg-slate-50 dark:bg-slate-700/30 rounded-lg">
+                    <span>VI. Hubungan Pribadi</span>
+                    <span class="font-bold text-teal-600">2 Items</span>
+                </div>
+                <div class="flex justify-between p-2 bg-slate-50 dark:bg-slate-700/30 rounded-lg">
+                    <span>I. Kesehatan</span>
+                    <span class="font-bold text-teal-600">2 Items</span>
+                </div>
+            `;
+
+            document.getElementById('modal-individual').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function simulatePrint() {
+            showToast("Menyiapkan Lembar Konseling Format PDF/Cetak...", "info");
+        }
+
+        function exportReportModal() {
+            const currentFilterClass = document.getElementById('filter-class').value;
+            if (currentFilterClass) {
+                document.getElementById('export-class-select').value = currentFilterClass;
+            }
+            document.getElementById('modal-export-excel').classList.remove('hidden');
+        }
+
+        function triggerExcelDownload() {
+            const selectedClass = document.getElementById('export-class-select').value;
+            exportClassToExcel(selectedClass);
+        }
+
+        function exportClassToExcel(selectedClass) {
+            if (typeof XLSX === 'undefined') {
+                showToast("Pustaka SheetJS belum siap.", "error");
+                return;
+            }
+
+            let studentsToExport = mockClassStudents;
+            if (selectedClass !== 'ALL') {
+                studentsToExport = mockClassStudents.filter(s => s.class === selectedClass);
+            }
+
+            if (studentsToExport.length === 0) {
+                showToast(`Tidak ditemukan data siswa untuk kelas ${selectedClass}`, "warning");
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            const tabulasiData = studentsToExport.map((s, idx) => ({
+                "No": idx + 1,
+                "ID / NISN": s.id || s.studentId || "-",
+                "Nama Siswa": s.name,
+                "Kelas": s.class,
+                "Jenis Kelamin": s.gender === 'L' ? 'Laki-Laki' : 'Perempuan',
+                "Total Masalah": s.count,
+                "Bidang Dominan": s.topCat,
+                "Tingkat Prioritas": s.priority,
+                "Waktu Submit": s.submittedAt || "Tersimpan Lokal"
+            }));
+
+            const wsTabulasi = XLSX.utils.json_to_sheet(tabulasiData);
+            wsTabulasi['!cols'] = [
+                { wch: 5 }, { wch: 15 }, { wch: 25 }, { wch: 10 },
+                { wch: 15 }, { wch: 15 }, { wch: 22 }, { wch: 18 }, { wch: 18 }
+            ];
+            XLSX.utils.book_append_sheet(wb, wsTabulasi, selectedClass === 'ALL' ? 'Tabulasi Paralel' : `Tabulasi ${selectedClass}`);
+
+            const fileClassTag = selectedClass.replace(/\s+/g, '_');
+            const dateTag = new Date().toISOString().slice(0, 10);
+            const fileName = `Laporan_DCM_${fileClassTag}_MTsN7_${dateTag}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            showToast(`Berhasil mengunduh Excel: ${fileName}`, "success");
+            closeModal('modal-export-excel');
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = msg;
+            if (type === 'success') toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-base";
+            else if (type === 'warning') toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-base";
+            else if (type === 'error') toastIcon.className = "fa-solid fa-circle-xmark text-rose-400 text-base";
+            else toastIcon.className = "fa-solid fa-circle-info text-blue-400 text-base";
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
