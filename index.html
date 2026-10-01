@@ -27,6 +27,10 @@
         .btn-primary:hover { background-color: #065f46; }
         .btn-secondary { background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-secondary:hover { background-color: #1d4ed8; }
+        .btn-excel { background-color: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-excel:hover { background-color: #15803d; }
+        .btn-word { background-color: #1d4ed8; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-word:hover { background-color: #1e40af; }
         .btn-danger { background-color: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-danger:hover { background-color: #b91c1c; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -36,6 +40,7 @@
         .hidden { display: none !important; }
         .program-card { background: #f0fdf4; border-left: 4px solid #047857; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
+        .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
     </style>
 </head>
 <body>
@@ -62,6 +67,7 @@
             <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn">📊 Hasil & Profil Masalah</button>
             <button onclick="switchTab('program')" id="tab-program" class="tab-btn">🎯 Program BK (RPL)</button>
             <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn">📖 Jurnal Konseling</button>
+            <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn">✏️ Edit Angket</button>
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn">⚙️ Pengaturan BK</button>
         </div>
 
@@ -98,7 +104,16 @@
 
         <!-- TAB 2: PROFIL MASALAH -->
         <section id="sec-profil" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 12px;">Profil & Derajat Masalah Siswa</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <h2 style="font-size: 18px;">Profil & Derajat Masalah Siswa</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Analisis rekapitulasi data isian DCM siswa.</p>
+                </div>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="exportToExcel('profil')" class="btn-excel">📊 Ekspor ke Excel (.csv/.xlsx)</button>
+                    <button onclick="exportToWord('profil')" class="btn-word">📄 Ekspor Laporan Word (.doc)</button>
+                </div>
+            </div>
             <div id="ringkasan-topik" style="display: grid; gap: 10px;"></div>
         </section>
 
@@ -107,21 +122,28 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div>
                     <h2 style="font-size: 18px;">Rencana Program Layanan BK (RPL) Auto-Generator</h2>
-                    <p style="font-size: 13px; color: #6b7280;">Program bimbingan yang direkomendasikan secara otomatis berdasarkan analisis data masalah siswa.</p>
+                    <p style="font-size: 13px; color: #6b7280;">Program bimbingan yang direkomendasikan secara otomatis berdasarkan data masalah siswa.</p>
                 </div>
-                <button onclick="generateProgramBK()" class="btn-secondary">⚡ Hasilkan Program BK</button>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor RPL ke Word (.doc)</button>
+                    <button onclick="generateProgramBK()" class="btn-secondary">⚡ Refresh Program</button>
+                </div>
             </div>
 
-            <div id="container-program">
-                <p style="font-size: 13px; color: #6b7280; text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">
-                    Klik tombol <b>"⚡ Hasilkan Program BK"</b> di atas untuk menyusun materi dan layanan bimbingan yang relevan dengan hasil isian DCM siswa.
-                </p>
-            </div>
+            <div id="container-program"></div>
         </section>
 
         <!-- TAB 4: JURNAL KONSELING -->
         <section id="sec-jurnal" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 12px;">Jurnal Bimbingan & Konseling Guru BK</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 style="font-size: 18px;">Jurnal Bimbingan & Konseling Guru BK</h2>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
+                        📥 Impor Data dari CSV/Excel <input type="file" id="import-excel-file" accept=".csv" onchange="importFromCSV(event)" style="display: none;">
+                    </label>
+                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal ke Excel (.csv)</button>
+                </div>
+            </div>
             
             <form onsubmit="tambahJurnal(event)" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                 <div class="form-grid" style="background: none; padding: 0;">
@@ -159,10 +181,44 @@
             </table>
         </section>
 
-        <!-- TAB 5: PENGATURAN & MASTER DATA KELAS -->
+        <!-- TAB 5: EDIT ANGKET & PERNYATAAN DCM (FITUR PENYESUAIAN SISWA) -->
+        <section id="sec-editsoal" class="card hidden">
+            <h2 style="font-size: 18px; margin-bottom: 8px;">Edit Angket & Butir Pernyataan DCM</h2>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Sesuaikan butir instrumen DCM dengan karakteristik dan kebutuhan kondisi siswa di sekolah/madrasah.</p>
+
+            <form onsubmit="tambahAtauEditSoal(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <input type="hidden" id="edit-soal-id">
+                <div class="form-grid" style="background: none; padding: 0;">
+                    <div class="form-group">
+                        <label>Pilih Bidang Topik DCM</label>
+                        <select id="edit-soal-topik"></select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Pernyataan Masalah DCM</label>
+                        <input type="text" id="edit-soal-text" required placeholder="Tuliskan butir masalah...">
+                    </div>
+                </div>
+                <button type="submit" id="btn-simpan-soal" class="btn-primary">➕ Tambah Butir Pernyataan</button>
+                <button type="button" onclick="resetFormSoal()" id="btn-batal-soal" class="btn-danger hidden" style="margin-left: 8px;">Batal Edit</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th style="width: 180px;">Bidang Topik</th>
+                        <th>Butir Pernyataan Masalah</th>
+                        <th style="text-align: right; width: 140px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-soal-body"></tbody>
+            </table>
+        </section>
+
+        <!-- TAB 6: PENGATURAN KELAS -->
         <section id="sec-pengaturan" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 12px;">Pengaturan & Master Data (Guru BK)</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Kelola daftar kelas agar siswa dapat memilih kelasnya dengan benar saat mengisi DCM.</p>
+            <h2 style="font-size: 18px; margin-bottom: 12px;">Pengaturan & Master Data Kelas</h2>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Kelola daftar kelas yang aktif di madrasah.</p>
 
             <form onsubmit="tambahKelas(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end;">
                 <div class="form-group" style="flex: 1; margin-bottom: 0;">
@@ -197,7 +253,21 @@
             "X. KURIKULUM & PELAJARAN", "XI. KEBIASAAN BELAJAR", "XII. CITA-CITA MASA DEPAN"
         ];
 
-        // Database rekomendasi materi RPL BK sesuai topik masalah DCM
+        const DEFAULT_SOAL = [
+            { id: 1, topik: 0, text: "Sering merasa lelah, pusing, atau kesehatan terganggu." },
+            { id: 2, topik: 1, text: "Uang saku kurang mencukupi untuk kebutuhan sekolah." },
+            { id: 3, topik: 2, text: "Merasa kurang perhatian dari orang tua di rumah." },
+            { id: 4, topik: 3, text: "Kesulitan beribadah secara teratur dan khusyuk." },
+            { id: 5, topik: 4, text: "Jarang memiliki waktu luang untuk rekreasi atau hobi." },
+            { id: 6, topik: 5, text: "Merasa kurang percaya diri di depan umum." },
+            { id: 7, topik: 6, text: "Kesulitan beradaptasi/bergaul dengan teman sekelas." },
+            { id: 8, topik: 7, text: "Cemas menghadapi perubahan fisik dan emosi remaja." },
+            { id: 9, topik: 8, text: "Merasa aturan sekolah terlalu ketat/mengekang." },
+            { id: 10, topik: 9, text: "Kesulitan memahami mata pelajaran tertentu." },
+            { id: 11, topik: 10, text: "Sering menunda-nunda mengerjakan PR/tugas sekolah." },
+            { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
+        ];
+
         const REKOMENDASI_PROGRAM = [
             { topik: 0, bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat Remaja", strategi: "Bimbingan Klasikal / Edukasi Kesehatan" },
             { topik: 1, bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Saku Siswa", strategi: "Bimbingan Kelompok" },
@@ -213,23 +283,8 @@
             { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Karir Klasikal" }
         ];
 
-        const SOAL_SAMPEL = [
-            { id: 1, topik: 0, text: "Sering merasa lelah, pusing, atau kesehatan terganggu." },
-            { id: 2, topik: 1, text: "Uang saku kurang mencukupi untuk kebutuhan sekolah." },
-            { id: 3, topik: 2, text: "Merasa kurang perhatian dari orang tua di rumah." },
-            { id: 4, topik: 3, text: "Kesulitan beribadah secara teratur dan khusyuk." },
-            { id: 5, topik: 4, text: "Jarang memiliki waktu luang untuk rekreasi atau hobi." },
-            { id: 6, topik: 5, text: "Merasa kurang percaya diri di depan umum." },
-            { id: 7, topik: 6, text: "Kesulitan beradaptasi/bergaul dengan teman sekelas." },
-            { id: 8, topik: 7, text: "Cemas menghadapi perubahan fisik dan emosi remaja." },
-            { id: 9, topik: 8, text: "Merasa aturan sekolah terlalu ketat/mengekang." },
-            { id: 10, topik: 9, text: "Kesulitan memahami mata pelajaran tertentu." },
-            { id: 11, topik: 10, text: "Sering menunda-nunda mengerjakan PR/tugas sekolah." },
-            { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
-        ];
-
         function switchTab(tab) {
-            ['dcm', 'profil', 'program', 'jurnal', 'pengaturan'].forEach(t => {
+            ['dcm', 'profil', 'program', 'jurnal', 'editsoal', 'pengaturan'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
                 document.getElementById(`tab-${t}`).classList.remove('active');
             });
@@ -237,9 +292,192 @@
             document.getElementById(`tab-${tab}`).classList.add('active');
             if(tab === 'profil') loadProfil();
             if(tab === 'program') generateProgramBK();
+            if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FITUR MANAJEMEN KELAS --- */
+        /* --- FITUR EDIT ANGKET & PERNYATAAN DCM (PENYESUAIAN SISWA) --- */
+        function getDCMSoal() {
+            let soal = JSON.parse(localStorage.getItem('master_soal_dcm'));
+            if(!soal || soal.length === 0) {
+                soal = DEFAULT_SOAL;
+                localStorage.setItem('master_soal_dcm', JSON.stringify(soal));
+            }
+            return soal;
+        }
+
+        function renderEditSoal() {
+            const soalList = getDCMSoal();
+            const selectTopik = document.getElementById('edit-soal-topik');
+            selectTopik.innerHTML = TOPIK_DCM.map((t, idx) => `<option value="${idx}">${t}</option>`).join('');
+
+            const tbody = document.getElementById('tabel-soal-body');
+            tbody.innerHTML = soalList.map((s, idx) => `
+                <tr>
+                    <td><b>${idx + 1}</b></td>
+                    <td><span class="badge-bidang">${TOPIK_DCM[s.topik]}</span></td>
+                    <td>${s.text}</td>
+                    <td style="text-align: right;">
+                        <button onclick="editSoal(${s.id})" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Edit</button>
+                        <button onclick="hapusSoal(${s.id})" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderSoal(); // Update juga pilihan di form DCM Siswa
+        }
+
+        function tambahAtauEditSoal(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-soal-id').value;
+            const topik = parseInt(document.getElementById('edit-soal-topik').value);
+            const text = document.getElementById('edit-soal-text').value.trim();
+
+            let soalList = getDCMSoal();
+
+            if(id) {
+                const index = soalList.findIndex(s => s.id == id);
+                if(index !== -1) {
+                    soalList[index] = { id: parseInt(id), topik, text };
+                }
+            } else {
+                const newId = Date.now();
+                soalList.push({ id: newId, topik, text });
+            }
+
+            localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
+            resetFormSoal();
+            renderEditSoal();
+            alert('Butir pernyataan DCM berhasil disesuaikan!');
+        }
+
+        function editSoal(id) {
+            const soalList = getDCMSoal();
+            const target = soalList.find(s => s.id == id);
+            if(target) {
+                document.getElementById('edit-soal-id').value = target.id;
+                document.getElementById('edit-soal-topik').value = target.topik;
+                document.getElementById('edit-soal-text').value = target.text;
+                
+                document.getElementById('btn-simpan-soal').innerText = '💾 Simpan Perubahan';
+                document.getElementById('btn-batal-soal').classList.remove('hidden');
+            }
+        }
+
+        function hapusSoal(id) {
+            if(confirm('Apakah Anda yakin ingin menghapus butir soal ini?')) {
+                let soalList = getDCMSoal();
+                soalList = soalList.filter(s => s.id != id);
+                localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
+                renderEditSoal();
+            }
+        }
+
+        function resetFormSoal() {
+            document.getElementById('edit-soal-id').value = '';
+            document.getElementById('edit-soal-text').value = '';
+            document.getElementById('btn-simpan-soal').innerText = '➕ Tambah Butir Pernyataan';
+            document.getElementById('btn-batal-soal').classList.add('hidden');
+        }
+
+        /* --- FITUR EKSPOR (EXCEL & WORD) & IMPOR (CSV/EXCEL) NATIVE --- */
+        function exportToExcel(type) {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            let filename = "Laporan_BK.csv";
+
+            if(type === 'jurnal') {
+                const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+                csvContent += "Tanggal,Nama Siswa,Jenis Layanan,Ringkasan Permasalahan\n";
+                list.forEach(item => {
+                    csvContent += `"${item.tgl}","${item.nama}","${item.jenis}","${item.masalah}"\n`;
+                });
+                filename = "Jurnal_Konseling_BK_MTsN7.csv";
+            } else if(type === 'profil') {
+                const data = JSON.parse(localStorage.getItem('dcm_data') || '{"respon":[]}');
+                const counts = new Array(12).fill(0);
+                data.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                
+                csvContent += "Bidang Topik DCM,Jumlah Dicentang Siswa,Status Derajat Masalah\n";
+                TOPIK_DCM.forEach((t, idx) => {
+                    const status = counts[idx] > 0 ? "Membutuhkan Konseling" : "Normal";
+                    csvContent += `"${t}","${counts[idx]}","${status}"\n`;
+                });
+                filename = "Profil_Derajat_Masalah_DCM.csv";
+            }
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function importFromCSV(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const lines = evt.target.result.split('\n');
+                if(lines.length > 1) {
+                    const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+                    for(let i = 1; i < lines.length; i++) {
+                        if(lines[i].trim()) {
+                            const cols = lines[i].split(',').map(c => c.replace(/"/g, ''));
+                            list.unshift({
+                                tgl: cols[0] || new Date().toLocaleDateString('id-ID'),
+                                nama: cols[1] || "Siswa Import",
+                                jenis: cols[2] || "Konseling Individual",
+                                masalah: cols[3] || "-"
+                            });
+                        }
+                    }
+                    localStorage.setItem('jurnal_bk', JSON.stringify(list));
+                    renderJurnal();
+                    alert("Berhasil mengimpor data jurnal dari file Excel/CSV!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportToWord(type) {
+            let headerTitle = "LAPORAN LAYANAN BIMBINGAN DAN KONSELING";
+            let contentHTML = "";
+
+            if(type === 'program') {
+                headerTitle = "RENCANA PROGRAM LAYANAN BK (RPL) - MTsN 7 TASIKMALAYA";
+                contentHTML = document.getElementById('container-program').innerHTML;
+            } else if(type === 'profil') {
+                headerTitle = "REKAPITULASI PROFIL DERAJAT MASALAH SISWA";
+                contentHTML = document.getElementById('ringkasan-topik').innerHTML;
+            }
+
+            const htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><title>Laporan BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; }</style></head>
+                <body>
+                    <h2 style="text-align: center; color: #047857;">${headerTitle}</h2>
+                    <hr><br>
+                    ${contentHTML}
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', htmlContent], {
+                type: 'application/msword'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${headerTitle.replace(/ /g, '_')}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        /* --- LOGIKA PENGATURAN KELAS & DCM --- */
         function initKelas() {
             let kelas = JSON.parse(localStorage.getItem('master_kelas'));
             if (!kelas || kelas.length === 0) {
@@ -294,7 +532,6 @@
             }
         }
 
-        /* --- FITUR AUTO-GENERATOR PROGRAM BK --- */
         function generateProgramBK() {
             const data = JSON.parse(localStorage.getItem('dcm_data') || '{"respon":[]}');
             const container = document.getElementById('container-program');
@@ -302,14 +539,18 @@
             const counts = new Array(12).fill(0);
             data.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
 
-            // Ambil topik yang paling banyak menjadi masalah
-            const adaMasalah = counts.some(c => c > 0);
+            let programPrioritas = [];
+            counts.forEach((jumlah, idx) => {
+                if (jumlah > 0) {
+                    const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
+                    if (rek) programPrioritas.push({ ...rek, jumlah });
+                }
+            });
 
-            if (!adaMasalah) {
+            if (programPrioritas.length === 0) {
                 container.innerHTML = `
                     <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 16px; border-radius: 8px;">
-                        <p style="font-size: 13px; color: #1e40af;"><b>ℹ️ Belum Ada Data Isian DCM Siswa.</b></p>
-                        <p style="font-size: 12px; color: #3b82f6; margin-top: 4px;">Di bawah ini adalah contoh Rencana Program Layanan BK standar berdasarkan bidang kebutuhan siswa:</p>
+                        <p style="font-size: 13px; color: #1e40af;"><b>ℹ️ Belum Ada Data Isian DCM.</b> Berikut contoh Rencana Program Layanan BK standar:</p>
                     </div>
                     <div style="margin-top: 16px;">
                         ${REKOMENDASI_PROGRAM.slice(0, 4).map(p => `
@@ -317,7 +558,7 @@
                                 <span class="badge-bidang">${p.bidang}</span>
                                 <h3 style="font-size: 15px; font-weight: bold; color: #065f46;">${p.materi}</h3>
                                 <p style="font-size: 12px; color: #4b5563; margin-top: 4px;"><b>Topik DCM:</b> ${TOPIK_DCM[p.topik]}</p>
-                                <p style="font-size: 12px; color: #047857; margin-top: 2px;"><b>Rekomendasi Layanan:</b> ${p.strategi}</p>
+                                <p style="font-size: 12px; color: #047857; margin-top: 2px;"><b>Bentuk Layanan:</b> ${p.strategi}</p>
                             </div>
                         `).join('')}
                     </div>
@@ -325,22 +566,11 @@
                 return;
             }
 
-            // Urutkan berdasarkan kebutuhan tertinggi
-            let programPrioritas = [];
-            counts.forEach((jumlah, idx) => {
-                if (jumlah > 0) {
-                    const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
-                    if (rek) {
-                        programPrioritas.push({ ...rek, jumlah });
-                    }
-                }
-            });
-
             programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
 
             container.innerHTML = `
                 <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-                    <p style="font-size: 13px; color: #166534;"><b>✅ Hasil Analisis Program Kebutuhan Siswa:</b> Ditemukan ${programPrioritas.length} topik prioritas utama yang membutuhkan intervensi bimbingan konselor.</p>
+                    <p style="font-size: 13px; color: #166534;"><b>✅ Hasil Analisis Kebutuhan Layanan BK:</b> Ditemukan ${programPrioritas.length} topik prioritas utama.</p>
                 </div>
                 ${programPrioritas.map((p, index) => `
                     <div class="program-card">
@@ -349,7 +579,7 @@
                             <span style="font-size: 11px; font-weight: bold; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px;">Prioritas #${index + 1} (${p.jumlah} Siswa)</span>
                         </div>
                         <h3 style="font-size: 15px; font-weight: bold; color: #065f46;">${p.materi}</h3>
-                        <p style="font-size: 12px; color: #4b5563; margin-top: 4px;"><b>Bidang Masalah DCM:</b> ${TOPIK_DCM[p.topik]}</p>
+                        <p style="font-size: 12px; color: #4b5563; margin-top: 4px;"><b>Bidang Masalah:</b> ${TOPIK_DCM[p.topik]}</p>
                         <p style="font-size: 12px; color: #047857; margin-top: 2px;"><b>Bentuk Layanan Intervensi:</b> ${p.strategi}</p>
                     </div>
                 `).join('')}
@@ -358,7 +588,8 @@
 
         function renderSoal() {
             const container = document.getElementById('container-soal');
-            container.innerHTML = SOAL_SAMPEL.map((s, idx) => `
+            const soalList = getDCMSoal();
+            container.innerHTML = soalList.map((s, idx) => `
                 <div class="soal-item">
                     <div>
                         <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik]}</span>
@@ -373,13 +604,14 @@
             const nama = document.getElementById('siswa-nama').value;
             if(!nama) { alert('Harap isi nama siswa terlebih dahulu!'); return; }
 
-            const respon = SOAL_SAMPEL.map(s => ({
+            const soalList = getDCMSoal();
+            const respon = soalList.map(s => ({
                 topik: s.topik,
                 isMasalah: document.getElementById(`soal-${s.id}`).checked ? 1 : 0
             }));
 
             localStorage.setItem('dcm_data', JSON.stringify({ nama, respon }));
-            alert('Jawaban DCM berhasil disimpan! Program BK otomatis disesuaikan.');
+            alert('Jawaban DCM berhasil disimpan!');
             switchTab('program');
         }
 
@@ -440,7 +672,7 @@
 
         window.onload = () => {
             renderKelas();
-            renderSoal();
+            renderEditSoal();
             renderJurnal();
             updateStatus();
         };
