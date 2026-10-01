@@ -25,6 +25,8 @@
         .soal-item { padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-primary { background-color: #047857; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-primary:hover { background-color: #065f46; }
+        .btn-secondary { background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-secondary:hover { background-color: #1d4ed8; }
         .btn-danger { background-color: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-danger:hover { background-color: #b91c1c; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -32,6 +34,8 @@
         th { background-color: #047857; color: white; }
         footer { background: #1f2937; color: #9ca3af; text-align: center; padding: 15px; font-size: 12px; margin-top: auto; }
         .hidden { display: none !important; }
+        .program-card { background: #f0fdf4; border-left: 4px solid #047857; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+        .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -56,6 +60,7 @@
         <div class="tabs">
             <button onclick="switchTab('dcm')" id="tab-dcm" class="tab-btn active">📝 Isi DCM Siswa</button>
             <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn">📊 Hasil & Profil Masalah</button>
+            <button onclick="switchTab('program')" id="tab-program" class="tab-btn">🎯 Program BK (RPL)</button>
             <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn">📖 Jurnal Konseling</button>
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn">⚙️ Pengaturan BK</button>
         </div>
@@ -72,7 +77,6 @@
                 </div>
                 <div class="form-group">
                     <label>Kelas</label>
-                    <!-- Opsi Kelas Di-Generate Dinamis oleh JavaScript -->
                     <select id="siswa-kelas"></select>
                 </div>
                 <div class="form-group">
@@ -98,7 +102,24 @@
             <div id="ringkasan-topik" style="display: grid; gap: 10px;"></div>
         </section>
 
-        <!-- TAB 3: JURNAL KONSELING -->
+        <!-- TAB 3: PROGRAM BK & REKOMENDASI RPL -->
+        <section id="sec-program" class="card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h2 style="font-size: 18px;">Rencana Program Layanan BK (RPL) Auto-Generator</h2>
+                    <p style="font-size: 13px; color: #6b7280;">Program bimbingan yang direkomendasikan secara otomatis berdasarkan analisis data masalah siswa.</p>
+                </div>
+                <button onclick="generateProgramBK()" class="btn-secondary">⚡ Hasilkan Program BK</button>
+            </div>
+
+            <div id="container-program">
+                <p style="font-size: 13px; color: #6b7280; text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">
+                    Klik tombol <b>"⚡ Hasilkan Program BK"</b> di atas untuk menyusun materi dan layanan bimbingan yang relevan dengan hasil isian DCM siswa.
+                </p>
+            </div>
+        </section>
+
+        <!-- TAB 4: JURNAL KONSELING -->
         <section id="sec-jurnal" class="card hidden">
             <h2 style="font-size: 18px; margin-bottom: 12px;">Jurnal Bimbingan & Konseling Guru BK</h2>
             
@@ -138,7 +159,7 @@
             </table>
         </section>
 
-        <!-- TAB 4: PENGATURAN & MASTER DATA KELAS -->
+        <!-- TAB 5: PENGATURAN & MASTER DATA KELAS -->
         <section id="sec-pengaturan" class="card hidden">
             <h2 style="font-size: 18px; margin-bottom: 12px;">Pengaturan & Master Data (Guru BK)</h2>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Kelola daftar kelas agar siswa dapat memilih kelasnya dengan benar saat mengisi DCM.</p>
@@ -176,6 +197,22 @@
             "X. KURIKULUM & PELAJARAN", "XI. KEBIASAAN BELAJAR", "XII. CITA-CITA MASA DEPAN"
         ];
 
+        // Database rekomendasi materi RPL BK sesuai topik masalah DCM
+        const REKOMENDASI_PROGRAM = [
+            { topik: 0, bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat Remaja", strategi: "Bimbingan Klasikal / Edukasi Kesehatan" },
+            { topik: 1, bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Saku Siswa", strategi: "Bimbingan Kelompok" },
+            { topik: 2, bidang: "Bimbingan Pribadi", materi: "Membangun Komunikasi Efektif & Keharmonisan dengan Keluarga", strategi: "Konseling Individual / Home Visit" },
+            { topik: 3, bidang: "Bimbingan Agama/Moral", materi: "Pembentukan Karakter Islami & Kedisiplinan Ibadah", strategi: "Bimbingan Klasikal" },
+            { topik: 4, bidang: "Bimbingan Pribadi", materi: "Pemanfaatan Waktu Luang & Pengembangan Bakat/Hobi", strategi: "Bimbingan Kelompok" },
+            { topik: 5, bidang: "Bimbingan Pribadi", materi: "Meningkatkan Rasa Percaya Diri & Manajemen Kecemasan", strategi: "Konseling Individual / Bimbingan Kelompok" },
+            { topik: 6, bidang: "Bimbingan Sosial", materi: "Etika Bergaul & Keterampilan Interaksi Sosial Teman Sebaya", strategi: "Bimbingan Klasikal" },
+            { topik: 7, bidang: "Bimbingan Pribadi", materi: "Memahami Pubertas & Kesehatan Reproduksi Remaja Madrasah", strategi: "Bimbingan Klasikal" },
+            { topik: 8, bidang: "Bimbingan Sosial", materi: "Adaptasi Lingkungan Sekolah & Kedisiplinan Tata Tertib", strategi: "Bimbingan Klasikal" },
+            { topik: 9, bidang: "Bimbingan Belajar", materi: "Strategi Memahami Mata Pelajaran Sukar & Diskusi Kelompok", strategi: "Bimbingan Kelompok" },
+            { topik: 10, bidang: "Bimbingan Belajar", materi: "Teknik Belajar Efektif & Manajemen Waktu Mengerjakan Tugas", strategi: "Bimbingan Klasikal" },
+            { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Karir Klasikal" }
+        ];
+
         const SOAL_SAMPEL = [
             { id: 1, topik: 0, text: "Sering merasa lelah, pusing, atau kesehatan terganggu." },
             { id: 2, topik: 1, text: "Uang saku kurang mencukupi untuk kebutuhan sekolah." },
@@ -192,20 +229,20 @@
         ];
 
         function switchTab(tab) {
-            ['dcm', 'profil', 'jurnal', 'pengaturan'].forEach(t => {
+            ['dcm', 'profil', 'program', 'jurnal', 'pengaturan'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
                 document.getElementById(`tab-${t}`).classList.remove('active');
             });
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
             document.getElementById(`tab-${tab}`).classList.add('active');
             if(tab === 'profil') loadProfil();
+            if(tab === 'program') generateProgramBK();
         }
 
         /* --- FITUR MANAJEMEN KELAS --- */
         function initKelas() {
             let kelas = JSON.parse(localStorage.getItem('master_kelas'));
             if (!kelas || kelas.length === 0) {
-                // Kelas default jika kosong
                 kelas = ['IX-A', 'IX-B', 'IX-C', 'IX-D'];
                 localStorage.setItem('master_kelas', JSON.stringify(kelas));
             }
@@ -214,12 +251,9 @@
 
         function renderKelas() {
             const kelas = initKelas();
-            
-            // 1. Update dropdown di form DCM Siswa
             const dropdownSiswa = document.getElementById('siswa-kelas');
             dropdownSiswa.innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
 
-            // 2. Update tabel di tab Pengaturan
             const tbodyPengaturan = document.getElementById('tabel-kelas-body');
             tbodyPengaturan.innerHTML = kelas.map((k, index) => `
                 <tr>
@@ -240,7 +274,6 @@
                 const kelas = initKelas();
                 if(!kelas.includes(namaKelasBaru)) {
                     kelas.push(namaKelasBaru);
-                    // Sortir otomatis abjad agar rapi
                     kelas.sort();
                     localStorage.setItem('master_kelas', JSON.stringify(kelas));
                     input.value = '';
@@ -260,7 +293,68 @@
                 renderKelas();
             }
         }
-        /* -------------------------------- */
+
+        /* --- FITUR AUTO-GENERATOR PROGRAM BK --- */
+        function generateProgramBK() {
+            const data = JSON.parse(localStorage.getItem('dcm_data') || '{"respon":[]}');
+            const container = document.getElementById('container-program');
+            
+            const counts = new Array(12).fill(0);
+            data.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+
+            // Ambil topik yang paling banyak menjadi masalah
+            const adaMasalah = counts.some(c => c > 0);
+
+            if (!adaMasalah) {
+                container.innerHTML = `
+                    <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 16px; border-radius: 8px;">
+                        <p style="font-size: 13px; color: #1e40af;"><b>ℹ️ Belum Ada Data Isian DCM Siswa.</b></p>
+                        <p style="font-size: 12px; color: #3b82f6; margin-top: 4px;">Di bawah ini adalah contoh Rencana Program Layanan BK standar berdasarkan bidang kebutuhan siswa:</p>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        ${REKOMENDASI_PROGRAM.slice(0, 4).map(p => `
+                            <div class="program-card">
+                                <span class="badge-bidang">${p.bidang}</span>
+                                <h3 style="font-size: 15px; font-weight: bold; color: #065f46;">${p.materi}</h3>
+                                <p style="font-size: 12px; color: #4b5563; margin-top: 4px;"><b>Topik DCM:</b> ${TOPIK_DCM[p.topik]}</p>
+                                <p style="font-size: 12px; color: #047857; margin-top: 2px;"><b>Rekomendasi Layanan:</b> ${p.strategi}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                return;
+            }
+
+            // Urutkan berdasarkan kebutuhan tertinggi
+            let programPrioritas = [];
+            counts.forEach((jumlah, idx) => {
+                if (jumlah > 0) {
+                    const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
+                    if (rek) {
+                        programPrioritas.push({ ...rek, jumlah });
+                    }
+                }
+            });
+
+            programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
+
+            container.innerHTML = `
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="font-size: 13px; color: #166534;"><b>✅ Hasil Analisis Program Kebutuhan Siswa:</b> Ditemukan ${programPrioritas.length} topik prioritas utama yang membutuhkan intervensi bimbingan konselor.</p>
+                </div>
+                ${programPrioritas.map((p, index) => `
+                    <div class="program-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span class="badge-bidang">${p.bidang}</span>
+                            <span style="font-size: 11px; font-weight: bold; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px;">Prioritas #${index + 1} (${p.jumlah} Siswa)</span>
+                        </div>
+                        <h3 style="font-size: 15px; font-weight: bold; color: #065f46;">${p.materi}</h3>
+                        <p style="font-size: 12px; color: #4b5563; margin-top: 4px;"><b>Bidang Masalah DCM:</b> ${TOPIK_DCM[p.topik]}</p>
+                        <p style="font-size: 12px; color: #047857; margin-top: 2px;"><b>Bentuk Layanan Intervensi:</b> ${p.strategi}</p>
+                    </div>
+                `).join('')}
+            `;
+        }
 
         function renderSoal() {
             const container = document.getElementById('container-soal');
@@ -285,8 +379,8 @@
             }));
 
             localStorage.setItem('dcm_data', JSON.stringify({ nama, respon }));
-            alert('Jawaban DCM berhasil disimpan di perangkat Anda!');
-            switchTab('profil');
+            alert('Jawaban DCM berhasil disimpan! Program BK otomatis disesuaikan.');
+            switchTab('program');
         }
 
         function loadProfil() {
@@ -345,7 +439,7 @@
         }
 
         window.onload = () => {
-            renderKelas(); // Render kelas pertama kali memuat
+            renderKelas();
             renderSoal();
             renderJurnal();
             updateStatus();
@@ -353,4 +447,3 @@
     </script>
 </body>
 </html>
-
