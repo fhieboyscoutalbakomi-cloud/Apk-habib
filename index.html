@@ -29,6 +29,8 @@
         .btn-secondary:hover { background-color: #1d4ed8; }
         .btn-excel { background-color: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-excel:hover { background-color: #15803d; }
+        .btn-template { background-color: #0d9488; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-template:hover { background-color: #0f766e; }
         .btn-word { background-color: #1d4ed8; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-word:hover { background-color: #1e40af; }
         .btn-danger { background-color: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
@@ -41,6 +43,7 @@
         .program-card { background: #f0fdf4; border-left: 4px solid #047857; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
     </style>
 </head>
 <body>
@@ -111,6 +114,7 @@
                     <p style="font-size: 12px; color: #6b7280;">Kelola data murid per kelas atau angkatan paralel untuk penyusunan Prota & Promes BK.</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="downloadTemplateExcel()" class="btn-template">📑 Unduh Template Excel Siswa</button>
                     <label class="btn-excel" style="display: inline-block; cursor: pointer;">
                         📥 Impor Data Murid (CSV/Excel) <input type="file" accept=".csv" onchange="importMuridFromCSV(event)" style="display: none;">
                     </label>
@@ -145,8 +149,8 @@
             </form>
 
             <!-- Filter Perkelas / Paralel -->
-            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; background: #f9fafb; padding: 12px; border-radius: 8px;">
-                <label style="font-size: 13px; font-weight: bold;">Filter Tampilan:</label>
+            <div class="filter-box">
+                <label style="font-size: 13px; font-weight: bold;">Filter Tampilan Kelas:</label>
                 <select id="filter-murid-kelas" onchange="renderTabelMurid()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
                     <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
                 </select>
@@ -188,12 +192,20 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 style="font-size: 18px;">Program Tahunan (Prota) & Program Semester (Promes) BK</h2>
-                    <p style="font-size: 13px; color: #6b7280;">Penyusunan Prota & Promes otomatis berbasis masalah murid perkelas dan angkatan paralel.</p>
+                    <p style="font-size: 13px; color: #6b7280;">Penyusunan Prota & Promes otomatis perkelas maupun angkatan paralel.</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Prota & Promes ke Word (.doc)</button>
                     <button onclick="generateProgramBK()" class="btn-secondary">⚡ Re-Generate Prota/Promes</button>
                 </div>
+            </div>
+
+            <!-- Filter Pilih Target Kelas untuk Prota & Promes -->
+            <div class="filter-box">
+                <label style="font-size: 13px; font-weight: bold; color: #047857;">🎯 Target Program BK:</label>
+                <select id="filter-prota-kelas" onchange="generateProgramBK()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; font-weight: bold;">
+                    <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
+                </select>
             </div>
 
             <div id="container-program"></div>
@@ -377,6 +389,17 @@
             return list;
         }
 
+        function downloadTemplateExcel() {
+            const templateCSV = "NISN,Nama Lengkap Murid,Kelas,Jenis Kelamin\n0081122334,AHDAN MAULANA,IX-A,L\n0085566778,ANISA FITRI,IX-A,P\n0089911223,DANI RAMDHANI,IX-B,L\n";
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + templateCSV);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Template_Import_Siswa_BK.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function renderTabelMurid() {
             const list = getMuridData();
             const filterKelas = document.getElementById('filter-murid-kelas').value;
@@ -473,20 +496,37 @@
                     }
                     localStorage.setItem('master_murid', JSON.stringify(list));
                     renderTabelMurid();
-                    alert(`Berhasil mengimpor ${count} data murid baru dari file CSV!`);
+                    alert(`Berhasil mengimpor ${count} data murid baru dari file CSV/Excel!`);
                 }
             };
             reader.readAsText(file);
         }
 
-        /* --- FITUR AUTO-GENERATOR PROTA & PROMES BK --- */
+        /* --- FITUR AUTO-GENERATOR PROTA & PROMES BK PERKELAS ATAU PARALEL --- */
         function generateProgramBK() {
-            const data = JSON.parse(localStorage.getItem('dcm_data') || '{"respon":[]}');
+            const targetKelas = document.getElementById('filter-prota-kelas').value;
+            const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
             const muridList = getMuridData();
             const container = document.getElementById('container-program');
             
+            // Filter murid terdaftar
+            let targetMurid = muridList;
+            if(targetKelas !== 'SEMUA') {
+                targetMurid = muridList.filter(m => m.kelas === targetKelas);
+            }
+
+            // Hitung akumulasi frekuensi masalah DCM berdasarkan kelas yang dipilih
             const counts = new Array(12).fill(0);
-            data.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+            let totalResponSiswa = 0;
+
+            data.forEach(item => {
+                if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
+                    totalResponSiswa++;
+                    item.respon.forEach(r => {
+                        if(r.isMasalah) counts[r.topik]++;
+                    });
+                }
+            });
 
             let programPrioritas = [];
             counts.forEach((jumlah, idx) => {
@@ -496,18 +536,21 @@
 
             programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
 
+            const labelJudulTarget = targetKelas === 'SEMUA' ? 'Angkatan Paralel (Semua Kelas)' : `Kelas ${targetKelas}`;
+
             container.innerHTML = `
                 <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="font-size: 15px; color: #166534; margin-bottom: 4px;"><b>📊 Ringkasan Analisis Kebutuhan Angkatan (Paralel):</b></h3>
+                    <h3 style="font-size: 15px; color: #166534; margin-bottom: 4px;"><b>📊 Ringkasan Analisis Kebutuhan [${labelJudulTarget}]:</b></h3>
                     <p style="font-size: 13px; color: #15803d;">
-                        • Total Murid Terdaftar: <b>${muridList.length} Murid</b><br>
-                        • Jumlah Topik Masalah Teridentifikasi: <b>12 Bidang Topik DCM</b>
+                        • Target Sasaran Layanan BK: <b>${labelJudulTarget}</b><br>
+                        • Total Murid Terdaftar: <b>${targetMurid.length} Murid</b><br>
+                        • Jumlah Respon Isian DCM Masuk: <b>${totalResponSiswa} Respon Siswa</b>
                     </p>
                 </div>
 
                 <!-- TAMPILAN MATRIKS PROTA & PROMES -->
-                <h3 style="font-size: 16px; margin-bottom: 8px;">1. Program Tahunan (PROTA) Layanan BK</h3>
-                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Alokasi bidang layanan bimbingan konseling selama 1 tahun ajaran berdasarkan skala kebutuhan murid.</p>
+                <h3 style="font-size: 16px; margin-bottom: 8px;">1. Program Tahunan (PROTA) BK - ${labelJudulTarget}</h3>
+                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Alokasi bidang layanan bimbingan konseling selama 1 tahun ajaran berbasis kebutuhan masalah spesifik.</p>
                 
                 <table style="margin-bottom: 30px;">
                     <thead>
@@ -524,7 +567,7 @@
                             <tr>
                                 <td>${idx + 1}</td>
                                 <td><span class="badge-bidang">${p.bidang}</span></td>
-                                <td><b>${p.materi}</b><br><span style="font-size: 11px; color: #6b7280;">Relevan topik: ${TOPIK_DCM[p.topik]}</span></td>
+                                <td><b>${p.materi}</b><br><span style="font-size: 11px; color: #6b7280;">Relevan topik: ${TOPIK_DCM[p.topik]} (${p.jumlah} dikeluhkan)</span></td>
                                 <td>${p.strategi}</td>
                                 <td><b>${p.sem}</b></td>
                             </tr>
@@ -532,8 +575,8 @@
                     </tbody>
                 </table>
 
-                <h3 style="font-size: 16px; margin-bottom: 8px;">2. Program Semester (PROMES) Layanan BK</h3>
-                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Sebaran distribusi pelaksanaan layanan BK per bulan efektif di kelas.</p>
+                <h3 style="font-size: 16px; margin-bottom: 8px;">2. Program Semester (PROMES) BK - ${labelJudulTarget}</h3>
+                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Sebaran distribusi jadwal pelaksanaan layanan BK per bulan efektif.</p>
                 
                 <table>
                     <thead>
@@ -655,9 +698,11 @@
                 });
                 filename = "Jurnal_Konseling_BK_MTsN7.csv";
             } else if(type === 'profil') {
-                const data = JSON.parse(localStorage.getItem('dcm_data') || '{"respon":[]}');
+                const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
                 const counts = new Array(12).fill(0);
-                data.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                data.forEach(item => {
+                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                });
                 
                 csvContent += "Bidang Topik DCM,Jumlah Dicentang Siswa,Status Derajat Masalah\n";
                 TOPIK_DCM.forEach((t, idx) => {
@@ -709,7 +754,8 @@
             let contentHTML = "";
 
             if(type === 'program') {
-                headerTitle = "PROGRAM TAHUNAN (PROTA) & SEMESTER (PROMES) BK - MTsN 7 TASIKMALAYA";
+                const targetKelas = document.getElementById('filter-prota-kelas').value;
+                headerTitle = `PROGRAM TAHUNAN (PROTA) & SEMESTER (PROMES) BK - KELAS ${targetKelas}`;
                 contentHTML = document.getElementById('container-program').innerHTML;
             } else if(type === 'profil') {
                 headerTitle = "REKAPITULASI PROFIL DERAJAT MASALAH SISWA";
@@ -764,6 +810,10 @@
             // Dropdown Filter Murid
             const filterMurid = document.getElementById('filter-murid-kelas');
             filterMurid.innerHTML = `<option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+
+            // Dropdown Filter Prota/Promes
+            const filterProta = document.getElementById('filter-prota-kelas');
+            filterProta.innerHTML = `<option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
 
             // Tabel Pengaturan Kelas
             const tbodyPengaturan = document.getElementById('tabel-kelas-body');
@@ -822,6 +872,7 @@
 
         function simpanResponDCM() {
             const nama = document.getElementById('siswa-nama').value;
+            const kelas = document.getElementById('siswa-kelas').value;
             if(!nama) { alert('Harap isi nama siswa terlebih dahulu!'); return; }
 
             const soalList = getDCMSoal();
@@ -830,21 +881,26 @@
                 isMasalah: document.getElementById(`soal-${s.id}`).checked ? 1 : 0
             }));
 
-            localStorage.setItem('dcm_data', JSON.stringify({ nama, respon }));
+            const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            listData.push({ nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') });
+            localStorage.setItem('dcm_data_list', JSON.stringify(listData));
+
             alert('Jawaban DCM berhasil disimpan!');
             switchTab('program');
         }
 
         function loadProfil() {
-            const data = JSON.parse(localStorage.getItem('dcm_data') || '{"respon":[]}');
+            const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
             const counts = new Array(12).fill(0);
-            data.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+            data.forEach(item => {
+                item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+            });
 
             document.getElementById('ringkasan-topik').innerHTML = TOPIK_DCM.map((t, idx) => `
                 <div style="display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
                     <span style="font-size: 13px; font-weight: 600;">${t}</span>
                     <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">
-                        ${counts[idx]} Masalah Dicentang
+                        ${counts[idx]} Masalah Dicentang Total
                     </span>
                 </div>
             `).join('');
@@ -865,7 +921,7 @@
         }
 
         function renderJurnal() {
-            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[{"tgl":"30/09/2026","nama":"Ade Candra (IX-A)","jenis":"Konseling Individual","masalah":"Kesulitan konsentrasi belajar."}]');
+            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[{"tgl":"01/10/2026","nama":"Ade Candra (IX-A)","jenis":"Konseling Individual","masalah":"Kesulitan konsentrasi belajar."}]');
             document.getElementById('tabel-jurnal-body').innerHTML = list.map(i => `
                 <tr>
                     <td>${i.tgl}</td>
