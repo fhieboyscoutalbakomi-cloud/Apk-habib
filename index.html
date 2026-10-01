@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Layanan BK Modern - MTsN 7 Tasikmalaya</title>
+    <!-- Library SheetJS untuk Ekspor & Impor File Excel Real (.xlsx) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f3f4f6; color: #1f2937; display: flex; flex-direction: column; min-height: 100vh; }
@@ -116,7 +118,7 @@
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="downloadTemplateExcel()" class="btn-template">📑 Unduh Template Excel Siswa</button>
                     <label class="btn-excel" style="display: inline-block; cursor: pointer;">
-                        📥 Impor Data Murid (CSV/Excel) <input type="file" accept=".csv" onchange="importMuridFromCSV(event)" style="display: none;">
+                        📥 Impor Data Murid (.xlsx / .csv) <input type="file" accept=".xlsx, .xls, .csv" onchange="importMuridFromExcel(event)" style="display: none;">
                     </label>
                     <button onclick="exportMuridToExcel()" class="btn-excel">📊 Ekspor Murid ke Excel</button>
                 </div>
@@ -126,7 +128,7 @@
             <form onsubmit="tambahMurid(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                 <div class="form-grid" style="background: none; padding: 0; margin-bottom: 10px;">
                     <div class="form-group">
-                        <label>NISN / NIS</label>
+                        <label>NIS / NISN</label>
                         <input type="text" id="murid-nisn" placeholder="Nomor Induk Siswa..." required>
                     </div>
                     <div class="form-group">
@@ -161,10 +163,10 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;">No</th>
-                        <th>NISN</th>
+                        <th>NIS</th>
                         <th>Nama Lengkap Murid</th>
                         <th>Kelas</th>
-                        <th>L/P</th>
+                        <th>JK</th>
                         <th style="text-align: right; width: 100px;">Aksi</th>
                     </tr>
                 </thead>
@@ -180,7 +182,7 @@
                     <p style="font-size: 12px; color: #6b7280;">Analisis rekapitulasi data isian DCM siswa.</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
-                    <button onclick="exportToExcel('profil')" class="btn-excel">📊 Ekspor ke Excel (.csv/.xlsx)</button>
+                    <button onclick="exportToExcel('profil')" class="btn-excel">📊 Ekspor ke Excel (.xlsx)</button>
                     <button onclick="exportToWord('profil')" class="btn-word">📄 Ekspor Laporan Word (.doc)</button>
                 </div>
             </div>
@@ -217,9 +219,9 @@
                 <h2 style="font-size: 18px;">Jurnal Bimbingan & Konseling Guru BK</h2>
                 <div class="action-bar" style="margin-bottom: 0;">
                     <label class="btn-excel" style="display: inline-block; cursor: pointer;">
-                        📥 Impor Data dari CSV/Excel <input type="file" id="import-excel-file" accept=".csv" onchange="importFromCSV(event)" style="display: none;">
+                        📥 Impor Jurnal (.xlsx / .csv) <input type="file" id="import-excel-file" accept=".xlsx, .xls, .csv" onchange="importJurnalFromExcel(event)" style="display: none;">
                     </label>
-                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal ke Excel (.csv)</button>
+                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal ke Excel (.xlsx)</button>
                 </div>
             </div>
             
@@ -374,7 +376,30 @@
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FITUR MANAJEMEN DATA MURID PERKELAS & PARALEL --- */
+        /* --- FITUR UNDUH TEMPLATE EXCEL REAL & MANAJEMEN MURID --- */
+        function downloadTemplateExcel() {
+            const dataTemplate = [
+                ["NIS", "NAMA", "KELAS", "JK"],
+                ["0081122334", "AHDAN MAULANA", "IX-A", "L"],
+                ["0085566778", "ANISA FITRI", "IX-A", "P"],
+                ["0089911223", "DANI RAMDHANI", "IX-B", "L"],
+                ["0083344556", "FADILAH NUR", "IX-B", "P"],
+                ["0087788990", "MUHAMMAD RIZKY", "IX-C", "L"]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
+            ws['!cols'] = [
+                { wch: 15 }, // NIS
+                { wch: 30 }, // NAMA
+                { wch: 12 }, // KELAS
+                { wch: 8 }   // JK
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Daftar Siswa");
+            XLSX.writeFile(wb, "Template_Daftar_Siswa_BK.xlsx");
+        }
+
         function getMuridData() {
             let list = JSON.parse(localStorage.getItem('master_murid'));
             if(!list || list.length === 0) {
@@ -387,17 +412,6 @@
                 localStorage.setItem('master_murid', JSON.stringify(list));
             }
             return list;
-        }
-
-        function downloadTemplateExcel() {
-            const templateCSV = "NISN,Nama Lengkap Murid,Kelas,Jenis Kelamin\n0081122334,AHDAN MAULANA,IX-A,L\n0085566778,ANISA FITRI,IX-A,P\n0089911223,DANI RAMDHANI,IX-B,L\n";
-            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + templateCSV);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Template_Import_Siswa_BK.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
 
         function renderTabelMurid() {
@@ -433,7 +447,7 @@
 
             const list = getMuridData();
             if(list.some(m => m.nisn === nisn)) {
-                alert('NISN murid sudah terdaftar!');
+                alert('NIS / NISN murid sudah terdaftar!');
                 return;
             }
 
@@ -457,49 +471,53 @@
 
         function exportMuridToExcel() {
             const list = getMuridData();
-            let csvContent = "data:text/csv;charset=utf-8,NISN,Nama Lengkap Murid,Kelas,Jenis Kelamin\n";
-            list.forEach(m => {
-                csvContent += `"${m.nisn}","${m.nama}","${m.kelas}","${m.jk}"\n`;
-            });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Daftar_Murid_MTsN7.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const dataExport = [["NIS", "NAMA", "KELAS", "JK"]];
+            list.forEach(m => dataExport.push([m.nisn, m.nama, m.kelas, m.jk]));
+
+            const ws = XLSX.utils.aoa_to_sheet(dataExport);
+            ws['!cols'] = [{ wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Murid");
+            XLSX.writeFile(wb, "Daftar_Murid_MTsN7.xlsx");
         }
 
-        function importMuridFromCSV(e) {
+        function importMuridFromExcel(e) {
             const file = e.target.files[0];
             if(!file) return;
 
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const lines = evt.target.result.split('\n');
-                if(lines.length > 1) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if(jsonData.length > 1) {
                     const list = getMuridData();
                     let count = 0;
-                    for(let i = 1; i < lines.length; i++) {
-                        if(lines[i].trim()) {
-                            const cols = lines[i].split(',').map(c => c.replace(/"/g, ''));
-                            const nisn = cols[0] || `ID_${Date.now()}_${i}`;
-                            const nama = cols[1] ? cols[1].toUpperCase() : "SUSAH DIBACA";
-                            const kelas = cols[2] || "IX-A";
-                            const jk = cols[3] || "L";
 
-                            if(!list.some(m => m.nisn === nisn)) {
+                    for(let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if(row && row.length > 0) {
+                            const nisn = String(row[0] || `ID_${Date.now()}_${i}`).trim();
+                            const nama = String(row[1] || "").toUpperCase().trim();
+                            const kelas = String(row[2] || "IX-A").trim();
+                            const jk = String(row[3] || "L").toUpperCase().trim();
+
+                            if(nama && !list.some(m => m.nisn === nisn)) {
                                 list.push({ nisn, nama, kelas, jk });
                                 count++;
                             }
                         }
                     }
+
                     localStorage.setItem('master_murid', JSON.stringify(list));
                     renderTabelMurid();
-                    alert(`Berhasil mengimpor ${count} data murid baru dari file CSV/Excel!`);
+                    alert(`Berhasil mengimpor ${count} data murid baru dari file Excel!`);
                 }
             };
-            reader.readAsText(file);
+            reader.readAsArrayBuffer(file);
         }
 
         /* --- FITUR AUTO-GENERATOR PROTA & PROMES BK PERKELAS ATAU PARALEL --- */
@@ -509,13 +527,11 @@
             const muridList = getMuridData();
             const container = document.getElementById('container-program');
             
-            // Filter murid terdaftar
             let targetMurid = muridList;
             if(targetKelas !== 'SEMUA') {
                 targetMurid = muridList.filter(m => m.kelas === targetKelas);
             }
 
-            // Hitung akumulasi frekuensi masalah DCM berdasarkan kelas yang dipilih
             const counts = new Array(12).fill(0);
             let totalResponSiswa = 0;
 
@@ -687,16 +703,16 @@
 
         /* --- FITUR EKSPOR (EXCEL & WORD) & IMPOR NATIVE --- */
         function exportToExcel(type) {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            let filename = "Laporan_BK.csv";
-
             if(type === 'jurnal') {
                 const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-                csvContent += "Tanggal,Nama Siswa,Jenis Layanan,Ringkasan Permasalahan\n";
-                list.forEach(item => {
-                    csvContent += `"${item.tgl}","${item.nama}","${item.jenis}","${item.masalah}"\n`;
-                });
-                filename = "Jurnal_Konseling_BK_MTsN7.csv";
+                const dataExport = [["Tanggal", "Nama Siswa", "Jenis Layanan", "Ringkasan Permasalahan"]];
+                list.forEach(i => dataExport.push([i.tgl, i.nama, i.jenis, i.masalah]));
+
+                const ws = XLSX.utils.aoa_to_sheet(dataExport);
+                ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 40 }];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Jurnal BK");
+                XLSX.writeFile(wb, "Jurnal_Konseling_BK_MTsN7.xlsx");
             } else if(type === 'profil') {
                 const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
                 const counts = new Array(12).fill(0);
@@ -704,49 +720,51 @@
                     item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
                 });
                 
-                csvContent += "Bidang Topik DCM,Jumlah Dicentang Siswa,Status Derajat Masalah\n";
+                const dataExport = [["Bidang Topik DCM", "Jumlah Dicentang Siswa", "Status Derajat Masalah"]];
                 TOPIK_DCM.forEach((t, idx) => {
                     const status = counts[idx] > 0 ? "Membutuhkan Konseling" : "Normal";
-                    csvContent += `"${t}","${counts[idx]}","${status}"\n`;
+                    dataExport.push([t, counts[idx], status]);
                 });
-                filename = "Profil_Derajat_Masalah_DCM.csv";
-            }
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                const ws = XLSX.utils.aoa_to_sheet(dataExport);
+                ws['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 25 }];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Profil Masalah");
+                XLSX.writeFile(wb, "Profil_Derajat_Masalah_DCM.xlsx");
+            }
         }
 
-        function importFromCSV(e) {
+        function importJurnalFromExcel(e) {
             const file = e.target.files[0];
             if(!file) return;
 
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const lines = evt.target.result.split('\n');
-                if(lines.length > 1) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if(jsonData.length > 1) {
                     const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-                    for(let i = 1; i < lines.length; i++) {
-                        if(lines[i].trim()) {
-                            const cols = lines[i].split(',').map(c => c.replace(/"/g, ''));
+                    for(let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if(row && row.length > 0) {
                             list.unshift({
-                                tgl: cols[0] || new Date().toLocaleDateString('id-ID'),
-                                nama: cols[1] || "Siswa Import",
-                                jenis: cols[2] || "Konseling Individual",
-                                masalah: cols[3] || "-"
+                                tgl: String(row[0] || new Date().toLocaleDateString('id-ID')),
+                                nama: String(row[1] || "Siswa Import"),
+                                jenis: String(row[2] || "Konseling Individual"),
+                                masalah: String(row[3] || "-")
                             });
                         }
                     }
                     localStorage.setItem('jurnal_bk', JSON.stringify(list));
                     renderJurnal();
-                    alert("Berhasil mengimpor data jurnal dari file Excel/CSV!");
+                    alert("Berhasil mengimpor data jurnal dari file Excel!");
                 }
             };
-            reader.readAsText(file);
+            reader.readAsArrayBuffer(file);
         }
 
         function exportToWord(type) {
@@ -799,23 +817,18 @@
         function renderKelas() {
             const kelas = initKelas();
             
-            // Dropdown di Form DCM
             const dropdownSiswa = document.getElementById('siswa-kelas');
             dropdownSiswa.innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
 
-            // Dropdown di Form Murid
             const dropdownMurid = document.getElementById('murid-kelas');
             dropdownMurid.innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
 
-            // Dropdown Filter Murid
             const filterMurid = document.getElementById('filter-murid-kelas');
             filterMurid.innerHTML = `<option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
 
-            // Dropdown Filter Prota/Promes
             const filterProta = document.getElementById('filter-prota-kelas');
             filterProta.innerHTML = `<option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
 
-            // Tabel Pengaturan Kelas
             const tbodyPengaturan = document.getElementById('tabel-kelas-body');
             tbodyPengaturan.innerHTML = kelas.map((k, index) => `
                 <tr>
