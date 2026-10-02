@@ -45,7 +45,7 @@
         .program-card { background: #f0fdf4; border-left: 4px solid #047857; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-        .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
+        .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; flex-wrap: wrap; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -150,12 +150,17 @@
                 <button type="submit" class="btn-primary">➕ Tambah Murid Baru</button>
             </form>
 
-            <!-- Filter Perkelas / Paralel -->
+            <!-- Filter Perkelas / Paralel + Tombol Hapus Sekelas -->
             <div class="filter-box">
-                <label style="font-size: 13px; font-weight: bold;">Filter Tampilan Kelas:</label>
-                <select id="filter-murid-kelas" onchange="renderTabelMurid()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
-                    <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
-                </select>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <label style="font-size: 13px; font-weight: bold;">Filter Tampilan Kelas:</label>
+                    <select id="filter-murid-kelas" onchange="renderTabelMurid()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
+                        <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
+                    </select>
+                </div>
+                <button onclick="hapusMuridPerKelas()" class="btn-danger" style="display: flex; align-items: center; gap: 6px;">
+                    🗑️ Hapus Semua Murid di Kelas Ini
+                </button>
             </div>
 
             <!-- Tabel Daftar Murid -->
@@ -376,7 +381,7 @@
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FITUR UNDUH TEMPLATE EXCEL REAL & MANAJEMEN MURID --- */
+        /* --- FITUR MANAJEMEN DATA MURID (HAPUS PERORANGAN & PERKELAS) --- */
         function downloadTemplateExcel() {
             const dataTemplate = [
                 ["NIS", "NAMA", "KELAS", "JK"],
@@ -389,10 +394,10 @@
 
             const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
             ws['!cols'] = [
-                { wch: 15 }, // NIS
-                { wch: 30 }, // NAMA
-                { wch: 12 }, // KELAS
-                { wch: 8 }   // JK
+                { wch: 15 },
+                { wch: 30 },
+                { wch: 12 },
+                { wch: 8 }
             ];
 
             const wb = XLSX.utils.book_new();
@@ -460,12 +465,43 @@
             alert(`Murid ${nama} berhasil ditambahkan ke kelas ${kelas}!`);
         }
 
+        /* FITUR HAPUS MURID PERORANGAN */
         function hapusMurid(nisn) {
-            if(confirm('Apakah Anda yakin ingin menghapus murid ini?')) {
-                let list = getMuridData();
+            let list = getMuridData();
+            const target = list.find(m => m.nisn === nisn);
+            const namaTarget = target ? target.nama : "murid ini";
+
+            if(confirm(`Apakah Anda yakin ingin menghapus data siswa ${namaTarget}?`)) {
                 list = list.filter(m => m.nisn !== nisn);
                 localStorage.setItem('master_murid', JSON.stringify(list));
                 renderTabelMurid();
+            }
+        }
+
+        /* FITUR HAPUS MURID PER KELAS ATAU SEMUA KELAS */
+        function hapusMuridPerKelas() {
+            const filterKelas = document.getElementById('filter-murid-kelas').value;
+            let list = getMuridData();
+
+            if (filterKelas === 'SEMUA') {
+                if (confirm('⚠️ PERINGATAN BERSAMA!\nApakah Anda yakin ingin MENGHAPUS SELURUH SISWA dari SEMUA KELAS?')) {
+                    localStorage.setItem('master_murid', JSON.stringify([]));
+                    renderTabelMurid();
+                    alert('Seluruh data siswa berhasil dikosongkan!');
+                }
+            } else {
+                const jumlahSiswaKelas = list.filter(m => m.kelas === filterKelas).length;
+                if (jumlahSiswaKelas === 0) {
+                    alert(`Tidak ada siswa di kelas ${filterKelas} untuk dihapus.`);
+                    return;
+                }
+
+                if (confirm(`Apakah Anda yakin ingin menghapus SELURUH SISWA (${jumlahSiswaKelas} murid) di KELAS ${filterKelas}?`)) {
+                    list = list.filter(m => m.kelas !== filterKelas);
+                    localStorage.setItem('master_murid', JSON.stringify(list));
+                    renderTabelMurid();
+                    alert(`Seluruh data siswa kelas ${filterKelas} berhasil dihapus!`);
+                }
             }
         }
 
