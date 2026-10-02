@@ -42,7 +42,6 @@
         th { background-color: #047857; color: white; }
         footer { background: #1f2937; color: #9ca3af; text-align: center; padding: 15px; font-size: 12px; margin-top: auto; }
         .hidden { display: none !important; }
-        .program-card { background: #f0fdf4; border-left: 4px solid #047857; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; flex-wrap: wrap; justify-content: space-between; }
@@ -80,16 +79,18 @@
         <!-- TAB 1: FORM DCM SISWA -->
         <section id="sec-dcm" class="card">
             <h2 style="font-size: 18px; margin-bottom: 8px;">Daftar Cek Masalah (DCM) Siswa</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Berikan tanda centang pada pernyataan yang menggambarkan masalah yang sedang Anda hadapi saat ini.</p>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Pilih kelas dan nama siswa, kemudian berikan tanda centang pada pernyataan masalah yang dihadapi.</p>
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Nama Lengkap Siswa</label>
-                    <input type="text" id="siswa-nama" placeholder="Tuliskan nama lengkap...">
+                    <label>Pilih Kelas</label>
+                    <select id="siswa-kelas" onchange="updateDropdownNamaSiswaDCM()"></select>
                 </div>
                 <div class="form-group">
-                    <label>Kelas</label>
-                    <select id="siswa-kelas"></select>
+                    <label>Pilih Nama Lengkap Siswa</label>
+                    <select id="siswa-nama" onchange="autoFillJenisKelaminDCM()">
+                        <option value="">-- Pilih Siswa --</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Jenis Kelamin</label>
@@ -375,10 +376,36 @@
             });
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
             document.getElementById(`tab-${tab}`).classList.add('active');
+            if(tab === 'dcm') updateDropdownNamaSiswaDCM();
             if(tab === 'murid') renderTabelMurid();
             if(tab === 'profil') loadProfil();
             if(tab === 'program') generateProgramBK();
             if(tab === 'editsoal') renderEditSoal();
+        }
+
+        /* --- INTEGRASI SISWA MASTER KE TAB DCM --- */
+        function updateDropdownNamaSiswaDCM() {
+            const kelasDipilih = document.getElementById('siswa-kelas').value;
+            const muridList = getMuridData();
+            const selectNama = document.getElementById('siswa-nama');
+
+            const filteredSiswa = muridList.filter(m => m.kelas === kelasDipilih);
+
+            if(filteredSiswa.length > 0) {
+                selectNama.innerHTML = `<option value="">-- Pilih Nama Siswa (${filteredSiswa.length}) --</option>` +
+                    filteredSiswa.map(m => `<option value="${m.nama}" data-jk="${m.jk}">${m.nama} (${m.nisn})</option>`).join('');
+            } else {
+                selectNama.innerHTML = `<option value="">-- Tidak ada data siswa di kelas ${kelasDipilih} --</option>`;
+            }
+            autoFillJenisKelaminDCM();
+        }
+
+        function autoFillJenisKelaminDCM() {
+            const selectNama = document.getElementById('siswa-nama');
+            const selectedOption = selectNama.options[selectNama.selectedIndex];
+            if(selectedOption && selectedOption.dataset.jk) {
+                document.getElementById('siswa-jk').value = selectedOption.dataset.jk;
+            }
         }
 
         /* --- FITUR MANAJEMEN DATA MURID (HAPUS PERORANGAN & PERKELAS) --- */
@@ -441,6 +468,7 @@
                     </td>
                 </tr>
             `).join('');
+            updateDropdownNamaSiswaDCM();
         }
 
         function tambahMurid(e) {
@@ -874,6 +902,8 @@
                     </td>
                 </tr>
             `).join('');
+
+            updateDropdownNamaSiswaDCM();
         }
 
         function tambahKelas(e) {
@@ -922,7 +952,7 @@
         function simpanResponDCM() {
             const nama = document.getElementById('siswa-nama').value;
             const kelas = document.getElementById('siswa-kelas').value;
-            if(!nama) { alert('Harap isi nama siswa terlebih dahulu!'); return; }
+            if(!nama) { alert('Harap pilih nama siswa terlebih dahulu!'); return; }
 
             const soalList = getDCMSoal();
             const respon = soalList.map(s => ({
