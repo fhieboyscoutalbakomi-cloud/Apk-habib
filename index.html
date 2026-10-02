@@ -267,10 +267,21 @@
             </table>
         </section>
 
-        <!-- TAB 6: EDIT ANGKET & PERNYATAAN DCM -->
+        <!-- TAB 6: EDIT ANGKET & PERNYATAAN DCM (DENGAN FITUR IMPOR / EKSPOR / TEMPLATE ANGKET) -->
         <section id="sec-editsoal" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">Edit Angket & Butir Pernyataan DCM</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Sesuaikan butir instrumen DCM dengan karakteristik dan kebutuhan kondisi siswa di sekolah/madrasah.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px;">Edit Angket & Butir Pernyataan DCM</h2>
+                    <p style="font-size: 13px; color: #6b7280;">Sesuaikan butir instrumen DCM dengan karakteristik dan kebutuhan kondisi siswa di sekolah/madrasah.</p>
+                </div>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="downloadTemplateAngketExcel()" class="btn-template">📑 Unduh Template Angket (.xlsx)</button>
+                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
+                        📥 Impor Angket (.xlsx / .csv) <input type="file" accept=".xlsx, .xls, .csv" onchange="importAngketFromExcel(event)" style="display: none;">
+                    </label>
+                    <button onclick="exportAngketToExcel()" class="btn-excel">📊 Ekspor Angket ke Excel</button>
+                </div>
+            </div>
 
             <form onsubmit="tambahAtauEditSoal(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                 <input type="hidden" id="edit-soal-id">
@@ -292,7 +303,7 @@
                 <thead>
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th style="width: 180px;">Bidang Topik</th>
+                        <th style="width: 220px;">Bidang Topik</th>
                         <th>Butir Pernyataan Masalah</th>
                         <th style="text-align: right; width: 140px;">Aksi</th>
                     </tr>
@@ -420,12 +431,7 @@
             ];
 
             const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
-            ws['!cols'] = [
-                { wch: 15 },
-                { wch: 30 },
-                { wch: 12 },
-                { wch: 8 }
-            ];
+            ws['!cols'] = [{ wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 8 }];
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Daftar Siswa");
@@ -493,7 +499,6 @@
             alert(`Murid ${nama} berhasil ditambahkan ke kelas ${kelas}!`);
         }
 
-        /* FITUR HAPUS MURID PERORANGAN */
         function hapusMurid(nisn) {
             let list = getMuridData();
             const target = list.find(m => m.nisn === nisn);
@@ -506,7 +511,6 @@
             }
         }
 
-        /* FITUR HAPUS MURID PER KELAS ATAU SEMUA KELAS */
         function hapusMuridPerKelas() {
             const filterKelas = document.getElementById('filter-murid-kelas').value;
             let list = getMuridData();
@@ -579,6 +583,83 @@
                     localStorage.setItem('master_murid', JSON.stringify(list));
                     renderTabelMurid();
                     alert(`Berhasil mengimpor ${count} data murid baru dari file Excel!`);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        /* --- FITUR IMPOR, EKSPOR, & TEMPLATE ANGKET DCM --- */
+        function downloadTemplateAngketExcel() {
+            const dataTemplate = [
+                ["BIDANG_TOPIK", "PERNYATAAN_MASALAH"],
+                ["I. KESEHATAN", "Sering merasa pusing atau sakit saat mengikuti pelajaran."],
+                ["II. KEADAAN EKONOMI", "Uang saku harian sangat terbatas untuk membeli alat tulis."],
+                ["III. KEHIDUPAN KELUARGA", "Merasa kurang komunikasi hangat dengan keluarga."],
+                ["XI. KEBIASAAN BELAJAR", "Sulit mengatur waktu antara belajar dan bermain game."]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
+            ws['!cols'] = [{ wch: 30 }, { wch: 60 }];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template Angket DCM");
+            XLSX.writeFile(wb, "Template_Angket_DCM.xlsx");
+        }
+
+        function exportAngketToExcel() {
+            const soalList = getDCMSoal();
+            const dataExport = [["BIDANG_TOPIK", "PERNYATAAN_MASALAH"]];
+            
+            soalList.forEach(s => {
+                dataExport.push([TOPIK_DCM[s.topik] || "I. KESEHATAN", s.text]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(dataExport);
+            ws['!cols'] = [{ wch: 30 }, { wch: 60 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Daftar Soal DCM");
+            XLSX.writeFile(wb, "Daftar_Pernyataan_Angket_DCM.xlsx");
+        }
+
+        function importAngketFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if(jsonData.length > 1) {
+                    let soalList = getDCMSoal();
+                    let count = 0;
+
+                    for(let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if(row && row.length > 0) {
+                            const topikStr = String(row[0] || "").trim().toUpperCase();
+                            const text = String(row[1] || "").trim();
+
+                            if(text) {
+                                let topikIndex = TOPIK_DCM.findIndex(t => t.toUpperCase().includes(topikStr) || topikStr.includes(t.toUpperCase()));
+                                if(topikIndex === -1) topikIndex = 0; // Default ke topik I jika tidak ketemu
+
+                                soalList.push({
+                                    id: Date.now() + Math.floor(Math.random() * 1000) + i,
+                                    topik: topikIndex,
+                                    text: text
+                                });
+                                count++;
+                            }
+                        }
+                    }
+
+                    localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
+                    renderEditSoal();
+                    alert(`Berhasil mengimpor ${count} butir pernyataan angket DCM baru!`);
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -700,7 +781,7 @@
             tbody.innerHTML = soalList.map((s, idx) => `
                 <tr>
                     <td><b>${idx + 1}</b></td>
-                    <td><span class="badge-bidang">${TOPIK_DCM[s.topik]}</span></td>
+                    <td><span class="badge-bidang">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span></td>
                     <td>${s.text}</td>
                     <td style="text-align: right;">
                         <button onclick="editSoal(${s.id})" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Edit</button>
@@ -941,7 +1022,7 @@
             container.innerHTML = soalList.map((s, idx) => `
                 <div class="soal-item">
                     <div>
-                        <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik]}</span>
+                        <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span>
                         <p style="font-size: 13px; font-weight: 500;">${idx + 1}. ${s.text}</p>
                     </div>
                     <input type="checkbox" id="soal-${s.id}" style="width: 20px; height: 20px;">
