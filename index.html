@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Layanan BK Modern - MTsN 7 Tasikmalaya</title>
-    <!-- Library SheetJS untuk Ekspor & Impor File Excel Real (.xlsx) -->
+
+    <!-- Library SheetJS untuk Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <!-- Firebase SDK (Realtime Cloud Database) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f3f4f6; color: #1f2937; display: flex; flex-direction: column; min-height: 100vh; }
@@ -28,22 +34,16 @@
         .btn-primary { background-color: #047857; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-primary:hover { background-color: #065f46; }
         .btn-secondary { background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-secondary:hover { background-color: #1d4ed8; }
         .btn-excel { background-color: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-excel:hover { background-color: #15803d; }
         .btn-template { background-color: #0d9488; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-template:hover { background-color: #0f766e; }
         .btn-word { background-color: #1d4ed8; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-word:hover { background-color: #1e40af; }
         .btn-danger { background-color: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-danger:hover { background-color: #b91c1c; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
         th { background-color: #047857; color: white; }
         footer { background: #1f2937; color: #9ca3af; text-align: center; padding: 15px; font-size: 12px; margin-top: auto; }
         .hidden { display: none !important; }
-        .program-card { background: #f0fdf4; border-left: 4px solid #047857; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
-        .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
+        .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
     </style>
@@ -56,32 +56,26 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling & DCM Online/Offline (PWA)</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling Realtime & Online Database</p>
                 </div>
             </div>
-            <div id="status-koneksi" class="status-badge online">
-                ● Mode Online
-            </div>
+            <div id="status-koneksi" class="status-badge online">● Terhubung ke Cloud</div>
         </div>
     </header>
 
     <main>
-        <!-- Navigasi Tab -->
         <div class="tabs">
             <button onclick="switchTab('dcm')" id="tab-dcm" class="tab-btn active">📝 Isi DCM Siswa</button>
             <button onclick="switchTab('murid')" id="tab-murid" class="tab-btn">👨‍🎓 Data Murid</button>
-            <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn">📊 Hasil & Profil Masalah</button>
+            <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn">📊 Profil Masalah Cloud</button>
             <button onclick="switchTab('program')" id="tab-program" class="tab-btn">🎯 Prota & Promes BK</button>
             <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn">📖 Jurnal Konseling</button>
-            <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn">✏️ Edit Angket</button>
-            <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn">⚙️ Pengaturan BK</button>
         </div>
 
-        <!-- TAB 1: FORM DCM SISWA -->
+        <!-- TAB 1: DCM SISWA -->
         <section id="sec-dcm" class="card">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">Daftar Cek Masalah (DCM) Siswa</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Berikan tanda centang pada pernyataan yang menggambarkan masalah yang sedang Anda hadapi saat ini.</p>
-
+            <h2>Daftar Cek Masalah (DCM) Siswa</h2>
+            <br>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Nama Lengkap Siswa</label>
@@ -89,883 +83,100 @@
                 </div>
                 <div class="form-group">
                     <label>Kelas</label>
-                    <select id="siswa-kelas"></select>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Kelamin</label>
-                    <select id="siswa-jk">
-                        <option value="L">Laki-laki</option>
-                        <option value="P">Perempuan</option>
+                    <select id="siswa-kelas">
+                        <option value="IX-A">IX-A</option>
+                        <option value="IX-B">IX-B</option>
+                        <option value="IX-C">IX-C</option>
                     </select>
                 </div>
             </div>
-
             <div id="container-soal"></div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                <span style="font-size: 11px; color: #6b7280;">*Dapat diisi saat offline (tanpa kuota/internet).</span>
-                <button onclick="simpanResponDCM()" class="btn-primary">💾 Simpan Jawaban DCM</button>
-            </div>
+            <button onclick="simpanResponDCM()" class="btn-primary" style="margin-top: 15px;">☁️ Simpan Hasil Ke Cloud</button>
         </section>
 
-        <!-- TAB 2: DATA MURID PERKELAS DAN PERPARALEL -->
+        <!-- TAB 2: DATA MURID -->
         <section id="sec-murid" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h2 style="font-size: 18px;">Daftar Murid Perkelas & Paralel</h2>
-                    <p style="font-size: 12px; color: #6b7280;">Kelola data murid per kelas atau angkatan paralel untuk penyusunan Prota & Promes BK.</p>
-                </div>
-                <div class="action-bar" style="margin-bottom: 0;">
-                    <button onclick="downloadTemplateExcel()" class="btn-template">📑 Unduh Template Excel Siswa</button>
-                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
-                        📥 Impor Data Murid (.xlsx / .csv) <input type="file" accept=".xlsx, .xls, .csv" onchange="importMuridFromExcel(event)" style="display: none;">
-                    </label>
-                    <button onclick="exportMuridToExcel()" class="btn-excel">📊 Ekspor Murid ke Excel</button>
-                </div>
-            </div>
-
-            <!-- Form Tambah Murid -->
-            <form onsubmit="tambahMurid(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                <div class="form-grid" style="background: none; padding: 0; margin-bottom: 10px;">
-                    <div class="form-group">
-                        <label>NIS / NISN</label>
-                        <input type="text" id="murid-nisn" placeholder="Nomor Induk Siswa..." required>
-                    </div>
-                    <div class="form-group">
-                        <label>Nama Lengkap Murid</label>
-                        <input type="text" id="murid-nama" placeholder="Nama murid..." required>
-                    </div>
-                    <div class="form-group">
-                        <label>Kelas</label>
-                        <select id="murid-kelas"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Kelamin</label>
-                        <select id="murid-jk">
-                            <option value="L">Laki-laki</option>
-                            <option value="P">Perempuan</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary">➕ Tambah Murid Baru</button>
-            </form>
-
-            <!-- Filter Perkelas / Paralel -->
-            <div class="filter-box">
-                <label style="font-size: 13px; font-weight: bold;">Filter Tampilan Kelas:</label>
-                <select id="filter-murid-kelas" onchange="renderTabelMurid()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
-                    <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
-                </select>
-            </div>
-
-            <!-- Tabel Daftar Murid -->
+            <h2>Daftar Murid Terkoneksi Database Cloud</h2>
+            <br>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">No</th>
                         <th>NIS</th>
-                        <th>Nama Lengkap Murid</th>
+                        <th>Nama Lengkap</th>
                         <th>Kelas</th>
-                        <th>JK</th>
-                        <th style="text-align: right; width: 100px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-murid-body"></tbody>
             </table>
         </section>
 
-        <!-- TAB 3: PROFIL MASALAH -->
+        <!-- TAB 3: PROFIL MASALAH REALTIME -->
         <section id="sec-profil" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <div>
-                    <h2 style="font-size: 18px;">Profil & Derajat Masalah Siswa</h2>
-                    <p style="font-size: 12px; color: #6b7280;">Analisis rekapitulasi data isian DCM siswa.</p>
-                </div>
-                <div class="action-bar" style="margin-bottom: 0;">
-                    <button onclick="exportToExcel('profil')" class="btn-excel">📊 Ekspor ke Excel (.xlsx)</button>
-                    <button onclick="exportToWord('profil')" class="btn-word">📄 Ekspor Laporan Word (.doc)</button>
-                </div>
-            </div>
-            <div id="ringkasan-topik" style="display: grid; gap: 10px;"></div>
+            <h2>Rekapitulasi Masalah Siswa (Realtime Cloud)</h2>
+            <br>
+            <div id="ringkasan-topik"></div>
         </section>
-
-        <!-- TAB 4: PROGRAM BK, PROTA & PROMES AUTO-GENERATOR -->
-        <section id="sec-program" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h2 style="font-size: 18px;">Program Tahunan (Prota) & Program Semester (Promes) BK</h2>
-                    <p style="font-size: 13px; color: #6b7280;">Penyusunan Prota & Promes otomatis perkelas maupun angkatan paralel.</p>
-                </div>
-                <div class="action-bar" style="margin-bottom: 0;">
-                    <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Prota & Promes ke Word (.doc)</button>
-                    <button onclick="generateProgramBK()" class="btn-secondary">⚡ Re-Generate Prota/Promes</button>
-                </div>
-            </div>
-
-            <!-- Filter Pilih Target Kelas untuk Prota & Promes -->
-            <div class="filter-box">
-                <label style="font-size: 13px; font-weight: bold; color: #047857;">🎯 Target Program BK:</label>
-                <select id="filter-prota-kelas" onchange="generateProgramBK()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; font-weight: bold;">
-                    <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
-                </select>
-            </div>
-
-            <div id="container-program"></div>
-        </section>
-
-        <!-- TAB 5: JURNAL KONSELING -->
-        <section id="sec-jurnal" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h2 style="font-size: 18px;">Jurnal Bimbingan & Konseling Guru BK</h2>
-                <div class="action-bar" style="margin-bottom: 0;">
-                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
-                        📥 Impor Jurnal (.xlsx / .csv) <input type="file" id="import-excel-file" accept=".xlsx, .xls, .csv" onchange="importJurnalFromExcel(event)" style="display: none;">
-                    </label>
-                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal ke Excel (.xlsx)</button>
-                </div>
-            </div>
-            
-            <form onsubmit="tambahJurnal(event)" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                <div class="form-grid" style="background: none; padding: 0;">
-                    <div class="form-group">
-                        <label>Nama Siswa</label>
-                        <input type="text" id="jurnal-nama" required placeholder="Nama Siswa">
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Layanan</label>
-                        <select id="jurnal-jenis">
-                            <option value="Konseling Individual">Konseling Individual</option>
-                            <option value="Konseling Kelompok">Konseling Kelompok</option>
-                            <option value="Bimbingan Klasikal">Bimbingan Klasikal</option>
-                            <option value="Home Visit">Home Visit</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label>Ringkasan Permasalahan & Tindak Lanjut</label>
-                    <textarea id="jurnal-masalah" rows="2" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary">➕ Simpan Catatan Jurnal</button>
-            </form>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Siswa</th>
-                        <th>Jenis Layanan</th>
-                        <th>Permasalahan</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-jurnal-body"></tbody>
-            </table>
-        </section>
-
-        <!-- TAB 6: EDIT ANGKET & PERNYATAAN DCM -->
-        <section id="sec-editsoal" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">Edit Angket & Butir Pernyataan DCM</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Sesuaikan butir instrumen DCM dengan karakteristik dan kebutuhan kondisi siswa di sekolah/madrasah.</p>
-
-            <form onsubmit="tambahAtauEditSoal(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                <input type="hidden" id="edit-soal-id">
-                <div class="form-grid" style="background: none; padding: 0;">
-                    <div class="form-group">
-                        <label>Pilih Bidang Topik DCM</label>
-                        <select id="edit-soal-topik"></select>
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Pernyataan Masalah DCM</label>
-                        <input type="text" id="edit-soal-text" required placeholder="Tuliskan butir masalah...">
-                    </div>
-                </div>
-                <button type="submit" id="btn-simpan-soal" class="btn-primary">➕ Tambah Butir Pernyataan</button>
-                <button type="button" onclick="resetFormSoal()" id="btn-batal-soal" class="btn-danger hidden" style="margin-left: 8px;">Batal Edit</button>
-            </form>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">No</th>
-                        <th style="width: 180px;">Bidang Topik</th>
-                        <th>Butir Pernyataan Masalah</th>
-                        <th style="text-align: right; width: 140px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-soal-body"></tbody>
-            </table>
-        </section>
-
-        <!-- TAB 7: PENGATURAN KELAS -->
-        <section id="sec-pengaturan" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 12px;">Pengaturan & Master Data Kelas</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Kelola daftar kelas yang aktif di madrasah.</p>
-
-            <form onsubmit="tambahKelas(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end;">
-                <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                    <label>Tambah Kelas Baru</label>
-                    <input type="text" id="input-kelas-baru" required placeholder="Contoh: IX-E">
-                </div>
-                <button type="submit" class="btn-primary">➕ Tambah Kelas</button>
-            </form>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Daftar Kelas Tersedia</th>
-                        <th style="text-align: right;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-kelas-body"></tbody>
-            </table>
-        </section>
-
     </main>
 
-    <footer>
-        <p>© 2026 Aplikasi Layanan BK Modern - MTsN 7 Tasikmalaya (PWA Offline Ready)</p>
-    </footer>
-
     <script>
+        // 1. KONFIGURASI FIREBASE CLOUD DATABASE
+        // Ganti kredensial di bawah ini dari Firebase Console milik Anda:
+        const firebaseConfig = {
+            apiKey: "AIzaSyYOUR_API_KEY",
+            authDomain: "your-app.firebaseapp.com",
+            projectId: "your-app-id",
+            storageBucket: "your-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         const TOPIK_DCM = [
             "I. KESEHATAN", "II. KEADAAN EKONOMI", "III. KEHIDUPAN KELUARGA",
-            "IV. AGAMA DAN MORAL", "V. REKREASI DAN HOBI", "VI. HUBUNGAN PRIBADI",
-            "VII. KEHIDUPAN SOSIAL", "VIII. MASALAH REMAJA", "IX. PENYESUAIAN SEKOLAH",
-            "X. KURIKULUM & PELAJARAN", "XI. KEBIASAAN BELAJAR", "XII. CITA-CITA MASA DEPAN"
-        ];
-
-        const DEFAULT_SOAL = [
-            { id: 1, topik: 0, text: "Sering merasa lelah, pusing, atau kesehatan terganggu." },
-            { id: 2, topik: 1, text: "Uang saku kurang mencukupi untuk kebutuhan sekolah." },
-            { id: 3, topik: 2, text: "Merasa kurang perhatian dari orang tua di rumah." },
-            { id: 4, topik: 3, text: "Kesulitan beribadah secara teratur dan khusyuk." },
-            { id: 5, topik: 4, text: "Jarang memiliki waktu luang untuk rekreasi atau hobi." },
-            { id: 6, topik: 5, text: "Merasa kurang percaya diri di depan umum." },
-            { id: 7, topik: 6, text: "Kesulitan beradaptasi/bergaul dengan teman sekelas." },
-            { id: 8, topik: 7, text: "Cemas menghadapi perubahan fisik dan emosi remaja." },
-            { id: 9, topik: 8, text: "Merasa aturan sekolah terlalu ketat/mengekang." },
-            { id: 10, topik: 9, text: "Kesulitan memahami mata pelajaran tertentu." },
-            { id: 11, topik: 10, text: "Sering menunda-nunda mengerjakan PR/tugas sekolah." },
-            { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
-        ];
-
-        const REKOMENDASI_PROGRAM = [
-            { topik: 0, bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat Remaja", strategi: "Bimbingan Klasikal / Edukasi Kesehatan", sem: "Semester 1", bulan: "Juli / Agustus" },
-            { topik: 1, bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Saku Siswa", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "September" },
-            { topik: 2, bidang: "Bimbingan Pribadi", materi: "Membangun Komunikasi Efektif & Keharmonisan dengan Keluarga", strategi: "Konseling Individual / Home Visit", sem: "Semester 1", bulan: "Oktober" },
-            { topik: 3, bidang: "Bimbingan Agama/Moral", materi: "Pembentukan Karakter Islami & Kedisiplinan Ibadah", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "November" },
-            { topik: 4, bidang: "Bimbingan Pribadi", materi: "Pemanfaatan Waktu Luang & Pengembangan Bakat/Hobi", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "Desember" },
-            { topik: 5, bidang: "Bimbingan Pribadi", materi: "Meningkatkan Rasa Percaya Diri & Manajemen Kecemasan", strategi: "Konseling Individual / Bimbingan Kelompok", sem: "Semester 2", bulan: "Januari" },
-            { topik: 6, bidang: "Bimbingan Sosial", materi: "Etika Bergaul & Keterampilan Interaksi Sosial Teman Sebaya", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Februari" },
-            { topik: 7, bidang: "Bimbingan Pribadi", materi: "Memahami Pubertas & Kesehatan Reproduksi Remaja Madrasah", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Maret" },
-            { topik: 8, bidang: "Bimbingan Sosial", materi: "Adaptasi Lingkungan Sekolah & Kedisiplinan Tata Tertib", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "April" },
-            { topik: 9, bidang: "Bimbingan Belajar", materi: "Strategi Memahami Mata Pelajaran Sukar & Diskusi Kelompok", strategi: "Bimbingan Kelompok", sem: "Semester 2", bulan: "Mei" },
-            { topik: 10, bidang: "Bimbingan Belajar", materi: "Teknik Belajar Efektif & Manajemen Waktu Mengerjakan Tugas", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Agustus" },
-            { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Karir Klasikal", sem: "Semester 2", bulan: "Januari / Februari" }
+            "IV. AGAMA DAN MORAL", "V. REKREASI DAN HOBI", "VI. HUBUNGAN PRIBADI"
         ];
 
         function switchTab(tab) {
-            ['dcm', 'murid', 'profil', 'program', 'jurnal', 'editsoal', 'pengaturan'].forEach(t => {
-                document.getElementById(`sec-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).classList.remove('active');
+            ['dcm', 'murid', 'profil', 'program', 'jurnal'].forEach(t => {
+                const el = document.getElementById(`sec-${t}`);
+                if (el) el.classList.add('hidden');
             });
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            if(tab === 'murid') renderTabelMurid();
-            if(tab === 'profil') loadProfil();
-            if(tab === 'program') generateProgramBK();
-            if(tab === 'editsoal') renderEditSoal();
+            if (tab === 'profil') loadProfilRealtime();
         }
 
-        /* --- FITUR UNDUH TEMPLATE EXCEL REAL & MANAJEMEN MURID --- */
-        function downloadTemplateExcel() {
-            const dataTemplate = [
-                ["NIS", "NAMA", "KELAS", "JK"],
-                ["0081122334", "AHDAN MAULANA", "IX-A", "L"],
-                ["0085566778", "ANISA FITRI", "IX-A", "P"],
-                ["0089911223", "DANI RAMDHANI", "IX-B", "L"],
-                ["0083344556", "FADILAH NUR", "IX-B", "P"],
-                ["0087788990", "MUHAMMAD RIZKY", "IX-C", "L"]
-            ];
-
-            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
-            ws['!cols'] = [
-                { wch: 15 }, // NIS
-                { wch: 30 }, // NAMA
-                { wch: 12 }, // KELAS
-                { wch: 8 }   // JK
-            ];
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Daftar Siswa");
-            XLSX.writeFile(wb, "Template_Daftar_Siswa_BK.xlsx");
-        }
-
-        function getMuridData() {
-            let list = JSON.parse(localStorage.getItem('master_murid'));
-            if(!list || list.length === 0) {
-                list = [
-                    { nisn: "0081234561", nama: "ADE CANDRA KIRANA", kelas: "IX-A", jk: "L" },
-                    { nisn: "0081234562", nama: "AAM MUKAROMAH", kelas: "IX-A", jk: "P" },
-                    { nisn: "0081234563", nama: "BUDI SANTOSO", kelas: "IX-B", jk: "L" },
-                    { nisn: "0081234564", nama: "CITRA DEWI", kelas: "IX-C", jk: "P" }
-                ];
-                localStorage.setItem('master_murid', JSON.stringify(list));
-            }
-            return list;
-        }
-
-        function renderTabelMurid() {
-            const list = getMuridData();
-            const filterKelas = document.getElementById('filter-murid-kelas').value;
-
-            let filteredList = list;
-            if(filterKelas !== 'SEMUA') {
-                filteredList = list.filter(m => m.kelas === filterKelas);
-            }
-
-            const tbody = document.getElementById('tabel-murid-body');
-            tbody.innerHTML = filteredList.map((m, idx) => `
-                <tr>
-                    <td><b>${idx + 1}</b></td>
-                    <td>${m.nisn}</td>
-                    <td><b>${m.nama}</b></td>
-                    <td><span class="badge-bidang">${m.kelas}</span></td>
-                    <td>${m.jk}</td>
-                    <td style="text-align: right;">
-                        <button onclick="hapusMurid('${m.nisn}')" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function tambahMurid(e) {
-            e.preventDefault();
-            const nisn = document.getElementById('murid-nisn').value.trim();
-            const nama = document.getElementById('murid-nama').value.trim().toUpperCase();
-            const kelas = document.getElementById('murid-kelas').value;
-            const jk = document.getElementById('murid-jk').value;
-
-            const list = getMuridData();
-            if(list.some(m => m.nisn === nisn)) {
-                alert('NIS / NISN murid sudah terdaftar!');
-                return;
-            }
-
-            list.push({ nisn, nama, kelas, jk });
-            localStorage.setItem('master_murid', JSON.stringify(list));
-            
-            document.getElementById('murid-nisn').value = '';
-            document.getElementById('murid-nama').value = '';
-            renderTabelMurid();
-            alert(`Murid ${nama} berhasil ditambahkan ke kelas ${kelas}!`);
-        }
-
-        function hapusMurid(nisn) {
-            if(confirm('Apakah Anda yakin ingin menghapus murid ini?')) {
-                let list = getMuridData();
-                list = list.filter(m => m.nisn !== nisn);
-                localStorage.setItem('master_murid', JSON.stringify(list));
-                renderTabelMurid();
-            }
-        }
-
-        function exportMuridToExcel() {
-            const list = getMuridData();
-            const dataExport = [["NIS", "NAMA", "KELAS", "JK"]];
-            list.forEach(m => dataExport.push([m.nisn, m.nama, m.kelas, m.jk]));
-
-            const ws = XLSX.utils.aoa_to_sheet(dataExport);
-            ws['!cols'] = [{ wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 8 }];
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Data Murid");
-            XLSX.writeFile(wb, "Daftar_Murid_MTsN7.xlsx");
-        }
-
-        function importMuridFromExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                if(jsonData.length > 1) {
-                    const list = getMuridData();
-                    let count = 0;
-
-                    for(let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        if(row && row.length > 0) {
-                            const nisn = String(row[0] || `ID_${Date.now()}_${i}`).trim();
-                            const nama = String(row[1] || "").toUpperCase().trim();
-                            const kelas = String(row[2] || "IX-A").trim();
-                            const jk = String(row[3] || "L").toUpperCase().trim();
-
-                            if(nama && !list.some(m => m.nisn === nisn)) {
-                                list.push({ nisn, nama, kelas, jk });
-                                count++;
-                            }
-                        }
-                    }
-
-                    localStorage.setItem('master_murid', JSON.stringify(list));
-                    renderTabelMurid();
-                    alert(`Berhasil mengimpor ${count} data murid baru dari file Excel!`);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        /* --- FITUR AUTO-GENERATOR PROTA & PROMES BK PERKELAS ATAU PARALEL --- */
-        function generateProgramBK() {
-            const targetKelas = document.getElementById('filter-prota-kelas').value;
-            const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-            const muridList = getMuridData();
-            const container = document.getElementById('container-program');
-            
-            let targetMurid = muridList;
-            if(targetKelas !== 'SEMUA') {
-                targetMurid = muridList.filter(m => m.kelas === targetKelas);
-            }
-
-            const counts = new Array(12).fill(0);
-            let totalResponSiswa = 0;
-
-            data.forEach(item => {
-                if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
-                    totalResponSiswa++;
-                    item.respon.forEach(r => {
-                        if(r.isMasalah) counts[r.topik]++;
-                    });
-                }
-            });
-
-            let programPrioritas = [];
-            counts.forEach((jumlah, idx) => {
-                const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
-                if (rek) programPrioritas.push({ ...rek, jumlah });
-            });
-
-            programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
-
-            const labelJudulTarget = targetKelas === 'SEMUA' ? 'Angkatan Paralel (Semua Kelas)' : `Kelas ${targetKelas}`;
-
-            container.innerHTML = `
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="font-size: 15px; color: #166534; margin-bottom: 4px;"><b>📊 Ringkasan Analisis Kebutuhan [${labelJudulTarget}]:</b></h3>
-                    <p style="font-size: 13px; color: #15803d;">
-                        • Target Sasaran Layanan BK: <b>${labelJudulTarget}</b><br>
-                        • Total Murid Terdaftar: <b>${targetMurid.length} Murid</b><br>
-                        • Jumlah Respon Isian DCM Masuk: <b>${totalResponSiswa} Respon Siswa</b>
-                    </p>
-                </div>
-
-                <!-- TAMPILAN MATRIKS PROTA & PROMES -->
-                <h3 style="font-size: 16px; margin-bottom: 8px;">1. Program Tahunan (PROTA) BK - ${labelJudulTarget}</h3>
-                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Alokasi bidang layanan bimbingan konseling selama 1 tahun ajaran berbasis kebutuhan masalah spesifik.</p>
-                
-                <table style="margin-bottom: 30px;">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;">No</th>
-                            <th>Bidang Layanan</th>
-                            <th>Materi / Topik Bimbingan</th>
-                            <th>Strategi Layanan</th>
-                            <th>Alokasi Semester</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${programPrioritas.map((p, idx) => `
-                            <tr>
-                                <td>${idx + 1}</td>
-                                <td><span class="badge-bidang">${p.bidang}</span></td>
-                                <td><b>${p.materi}</b><br><span style="font-size: 11px; color: #6b7280;">Relevan topik: ${TOPIK_DCM[p.topik]} (${p.jumlah} dikeluhkan)</span></td>
-                                <td>${p.strategi}</td>
-                                <td><b>${p.sem}</b></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-
-                <h3 style="font-size: 16px; margin-bottom: 8px;">2. Program Semester (PROMES) BK - ${labelJudulTarget}</h3>
-                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Sebaran distribusi jadwal pelaksanaan layanan BK per bulan efektif.</p>
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;">No</th>
-                            <th>Materi Layanan BK</th>
-                            <th>Semester</th>
-                            <th>Perkiraan Bulan Pelaksanaan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${programPrioritas.map((p, idx) => `
-                            <tr>
-                                <td>${idx + 1}</td>
-                                <td><b>${p.materi}</b></td>
-                                <td>${p.sem}</td>
-                                <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">📅 ${p.bulan}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        /* --- FITUR EDIT ANGKET DCM --- */
-        function getDCMSoal() {
-            let soal = JSON.parse(localStorage.getItem('master_soal_dcm'));
-            if(!soal || soal.length === 0) {
-                soal = DEFAULT_SOAL;
-                localStorage.setItem('master_soal_dcm', JSON.stringify(soal));
-            }
-            return soal;
-        }
-
-        function renderEditSoal() {
-            const soalList = getDCMSoal();
-            const selectTopik = document.getElementById('edit-soal-topik');
-            selectTopik.innerHTML = TOPIK_DCM.map((t, idx) => `<option value="${idx}">${t}</option>`).join('');
-
-            const tbody = document.getElementById('tabel-soal-body');
-            tbody.innerHTML = soalList.map((s, idx) => `
-                <tr>
-                    <td><b>${idx + 1}</b></td>
-                    <td><span class="badge-bidang">${TOPIK_DCM[s.topik]}</span></td>
-                    <td>${s.text}</td>
-                    <td style="text-align: right;">
-                        <button onclick="editSoal(${s.id})" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Edit</button>
-                        <button onclick="hapusSoal(${s.id})" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            renderSoal();
-        }
-
-        function tambahAtauEditSoal(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-soal-id').value;
-            const topik = parseInt(document.getElementById('edit-soal-topik').value);
-            const text = document.getElementById('edit-soal-text').value.trim();
-
-            let soalList = getDCMSoal();
-
-            if(id) {
-                const index = soalList.findIndex(s => s.id == id);
-                if(index !== -1) {
-                    soalList[index] = { id: parseInt(id), topik, text };
-                }
-            } else {
-                const newId = Date.now();
-                soalList.push({ id: newId, topik, text });
-            }
-
-            localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
-            resetFormSoal();
-            renderEditSoal();
-            alert('Butir pernyataan DCM berhasil disesuaikan!');
-        }
-
-        function editSoal(id) {
-            const soalList = getDCMSoal();
-            const target = soalList.find(s => s.id == id);
-            if(target) {
-                document.getElementById('edit-soal-id').value = target.id;
-                document.getElementById('edit-soal-topik').value = target.topik;
-                document.getElementById('edit-soal-text').value = target.text;
-                
-                document.getElementById('btn-simpan-soal').innerText = '💾 Simpan Perubahan';
-                document.getElementById('btn-batal-soal').classList.remove('hidden');
-            }
-        }
-
-        function hapusSoal(id) {
-            if(confirm('Apakah Anda yakin ingin menghapus butir soal ini?')) {
-                let soalList = getDCMSoal();
-                soalList = soalList.filter(s => s.id != id);
-                localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
-                renderEditSoal();
-            }
-        }
-
-        function resetFormSoal() {
-            document.getElementById('edit-soal-id').value = '';
-            document.getElementById('edit-soal-text').value = '';
-            document.getElementById('btn-simpan-soal').innerText = '➕ Tambah Butir Pernyataan';
-            document.getElementById('btn-batal-soal').classList.add('hidden');
-        }
-
-        /* --- FITUR EKSPOR (EXCEL & WORD) & IMPOR NATIVE --- */
-        function exportToExcel(type) {
-            if(type === 'jurnal') {
-                const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-                const dataExport = [["Tanggal", "Nama Siswa", "Jenis Layanan", "Ringkasan Permasalahan"]];
-                list.forEach(i => dataExport.push([i.tgl, i.nama, i.jenis, i.masalah]));
-
-                const ws = XLSX.utils.aoa_to_sheet(dataExport);
-                ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 40 }];
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Jurnal BK");
-                XLSX.writeFile(wb, "Jurnal_Konseling_BK_MTsN7.xlsx");
-            } else if(type === 'profil') {
-                const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-                const counts = new Array(12).fill(0);
-                data.forEach(item => {
-                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
-                });
-                
-                const dataExport = [["Bidang Topik DCM", "Jumlah Dicentang Siswa", "Status Derajat Masalah"]];
-                TOPIK_DCM.forEach((t, idx) => {
-                    const status = counts[idx] > 0 ? "Membutuhkan Konseling" : "Normal";
-                    dataExport.push([t, counts[idx], status]);
-                });
-
-                const ws = XLSX.utils.aoa_to_sheet(dataExport);
-                ws['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 25 }];
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Profil Masalah");
-                XLSX.writeFile(wb, "Profil_Derajat_Masalah_DCM.xlsx");
-            }
-        }
-
-        function importJurnalFromExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                if(jsonData.length > 1) {
-                    const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-                    for(let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        if(row && row.length > 0) {
-                            list.unshift({
-                                tgl: String(row[0] || new Date().toLocaleDateString('id-ID')),
-                                nama: String(row[1] || "Siswa Import"),
-                                jenis: String(row[2] || "Konseling Individual"),
-                                masalah: String(row[3] || "-")
-                            });
-                        }
-                    }
-                    localStorage.setItem('jurnal_bk', JSON.stringify(list));
-                    renderJurnal();
-                    alert("Berhasil mengimpor data jurnal dari file Excel!");
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function exportToWord(type) {
-            let headerTitle = "LAPORAN LAYANAN BIMBINGAN DAN KONSELING";
-            let contentHTML = "";
-
-            if(type === 'program') {
-                const targetKelas = document.getElementById('filter-prota-kelas').value;
-                headerTitle = `PROGRAM TAHUNAN (PROTA) & SEMESTER (PROMES) BK - KELAS ${targetKelas}`;
-                contentHTML = document.getElementById('container-program').innerHTML;
-            } else if(type === 'profil') {
-                headerTitle = "REKAPITULASI PROFIL DERAJAT MASALAH SISWA";
-                contentHTML = document.getElementById('ringkasan-topik').innerHTML;
-            }
-
-            const htmlContent = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head><title>Laporan BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #333; padding: 8px; text-align: left; }</style></head>
-                <body>
-                    <h2 style="text-align: center; color: #047857;">${headerTitle}</h2>
-                    <hr><br>
-                    ${contentHTML}
-                </body>
-                </html>
-            `;
-
-            const blob = new Blob(['\ufeff', htmlContent], {
-                type: 'application/msword'
-            });
-
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${headerTitle.replace(/ /g, '_')}.doc`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        /* --- LOGIKA PENGATURAN KELAS & DCM --- */
-        function initKelas() {
-            let kelas = JSON.parse(localStorage.getItem('master_kelas'));
-            if (!kelas || kelas.length === 0) {
-                kelas = ['IX-A', 'IX-B', 'IX-C', 'IX-D'];
-                localStorage.setItem('master_kelas', JSON.stringify(kelas));
-            }
-            return kelas;
-        }
-
-        function renderKelas() {
-            const kelas = initKelas();
-            
-            const dropdownSiswa = document.getElementById('siswa-kelas');
-            dropdownSiswa.innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
-
-            const dropdownMurid = document.getElementById('murid-kelas');
-            dropdownMurid.innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
-
-            const filterMurid = document.getElementById('filter-murid-kelas');
-            filterMurid.innerHTML = `<option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
-
-            const filterProta = document.getElementById('filter-prota-kelas');
-            filterProta.innerHTML = `<option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
-
-            const tbodyPengaturan = document.getElementById('tabel-kelas-body');
-            tbodyPengaturan.innerHTML = kelas.map((k, index) => `
-                <tr>
-                    <td><b>${k}</b></td>
-                    <td style="text-align: right;">
-                        <button onclick="hapusKelas(${index})" class="btn-danger">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function tambahKelas(e) {
-            e.preventDefault();
-            const input = document.getElementById('input-kelas-baru');
-            const namaKelasBaru = input.value.trim().toUpperCase();
-            
-            if(namaKelasBaru) {
-                const kelas = initKelas();
-                if(!kelas.includes(namaKelasBaru)) {
-                    kelas.push(namaKelasBaru);
-                    kelas.sort();
-                    localStorage.setItem('master_kelas', JSON.stringify(kelas));
-                    input.value = '';
-                    renderKelas();
-                    alert(`Kelas ${namaKelasBaru} berhasil ditambahkan!`);
-                } else {
-                    alert('Nama Kelas sudah ada di daftar!');
-                }
-            }
-        }
-
-        function hapusKelas(index) {
-            const kelas = initKelas();
-            if(confirm(`Apakah Anda yakin ingin menghapus kelas ${kelas[index]}?`)) {
-                kelas.splice(index, 1);
-                localStorage.setItem('master_kelas', JSON.stringify(kelas));
-                renderKelas();
-            }
-        }
-
-        function renderSoal() {
-            const container = document.getElementById('container-soal');
-            const soalList = getDCMSoal();
-            container.innerHTML = soalList.map((s, idx) => `
-                <div class="soal-item">
-                    <div>
-                        <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik]}</span>
-                        <p style="font-size: 13px; font-weight: 500;">${idx + 1}. ${s.text}</p>
-                    </div>
-                    <input type="checkbox" id="soal-${s.id}" style="width: 20px; height: 20px;">
-                </div>
-            `).join('');
-        }
-
-        function simpanResponDCM() {
+        // 2. SIMPAN HASIL ISIAN DCM LANGSUNG KE CLOUD
+        async function simpanResponDCM() {
             const nama = document.getElementById('siswa-nama').value;
             const kelas = document.getElementById('siswa-kelas').value;
-            if(!nama) { alert('Harap isi nama siswa terlebih dahulu!'); return; }
+            if (!nama) { alert('Tulis nama terlebih dahulu!'); return; }
 
-            const soalList = getDCMSoal();
-            const respon = soalList.map(s => ({
-                topik: s.topik,
-                isMasalah: document.getElementById(`soal-${s.id}`).checked ? 1 : 0
-            }));
-
-            const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-            listData.push({ nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') });
-            localStorage.setItem('dcm_data_list', JSON.stringify(listData));
-
-            alert('Jawaban DCM berhasil disimpan!');
-            switchTab('program');
-        }
-
-        function loadProfil() {
-            const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-            const counts = new Array(12).fill(0);
-            data.forEach(item => {
-                item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
-            });
-
-            document.getElementById('ringkasan-topik').innerHTML = TOPIK_DCM.map((t, idx) => `
-                <div style="display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
-                    <span style="font-size: 13px; font-weight: 600;">${t}</span>
-                    <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">
-                        ${counts[idx]} Masalah Dicentang Total
-                    </span>
-                </div>
-            `).join('');
-        }
-
-        function tambahJurnal(e) {
-            e.preventDefault();
-            const nama = document.getElementById('jurnal-nama').value;
-            const jenis = document.getElementById('jurnal-jenis').value;
-            const masalah = document.getElementById('jurnal-masalah').value;
-
-            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-            list.unshift({ tgl: new Date().toLocaleDateString('id-ID'), nama, jenis, masalah });
-            localStorage.setItem('jurnal_bk', JSON.stringify(list));
-            renderJurnal();
-            document.getElementById('jurnal-masalah').value = '';
-            document.getElementById('jurnal-nama').value = '';
-        }
-
-        function renderJurnal() {
-            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[{"tgl":"01/10/2026","nama":"Ade Candra (IX-A)","jenis":"Konseling Individual","masalah":"Kesulitan konsentrasi belajar."}]');
-            document.getElementById('tabel-jurnal-body').innerHTML = list.map(i => `
-                <tr>
-                    <td>${i.tgl}</td>
-                    <td><b>${i.nama}</b></td>
-                    <td><span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${i.jenis}</span></td>
-                    <td>${i.masalah}</td>
-                </tr>
-            `).join('');
-        }
-
-        window.addEventListener('online', updateStatus);
-        window.addEventListener('offline', updateStatus);
-
-        function updateStatus() {
-            const el = document.getElementById('status-koneksi');
-            if(navigator.onLine) {
-                el.className = "status-badge online";
-                el.innerHTML = "● Mode Online";
-            } else {
-                el.className = "status-badge offline";
-                el.innerHTML = "⚡ Offline Mode";
+            try {
+                await db.collection("dcm_respon").add({
+                    nama: nama,
+                    kelas: kelas,
+                    waktu: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert('Data berhasil terkirim ke Server Cloud Admin BK!');
+            } catch (error) {
+                alert('Gagal menyimpan ke Cloud: ' + error.message);
             }
         }
 
-        window.onload = () => {
-            renderKelas();
-            renderTabelMurid();
-            renderEditSoal();
-            renderJurnal();
-            updateStatus();
-        };
+        // 3. LISTEN DATA SECARA REALTIME DARI CLOUD
+        function loadProfilRealtime() {
+            db.collection("dcm_respon").onSnapshot((snapshot) => {
+                let totalRespon = snapshot.size;
+                document.getElementById('ringkasan-topik').innerHTML = `
+                    <div style="background: #e0f2fe; padding: 15px; border-radius: 8px;">
+                        <b>Total Respon Masuk di Cloud Admin:</b> ${totalRespon} Siswa
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
