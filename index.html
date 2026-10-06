@@ -7,7 +7,7 @@
     <!-- Library SheetJS untuk Ekspor & Impor File Excel Real (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
-    <!-- Firebase SDK (Untuk Sinkronisasi Online Multi-User / Cloud Database) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -44,6 +44,7 @@
         footer { background: #1f2937; color: #9ca3af; text-align: center; padding: 15px; font-size: 12px; margin-top: auto; }
         .hidden { display: none !important; }
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
+        .badge-pancacinta { background: #fef3c7; color: #92400e; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; flex-wrap: wrap; justify-content: space-between; }
     </style>
@@ -56,7 +57,7 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling & DCM Online/Offline (PWA)</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling & DCM Online/Offline (Kurikulum Berbasis Cinta)</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -78,7 +79,7 @@
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
         </div>
 
-        <!-- TAB 1: FORM DCM SISWA (BISA DIAKSES OLEH SISWA & PUBLIC) -->
+        <!-- TAB 1: FORM DCM SISWA -->
         <section id="sec-dcm" class="card">
             <h2 style="font-size: 18px; margin-bottom: 8px;">Daftar Cek Masalah (DCM) Siswa</h2>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Pilih kelas dan nama siswa, kemudian berikan tanda centang pada pernyataan masalah yang dihadapi.</p>
@@ -197,6 +198,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 style="font-size: 18px;">Program Tahunan (Prota) & Program Semester (Promes) BK</h2>
+                    <p style="font-size: 12px; color: #047857; font-weight: 600;">❤️ Berlandaskan Kurikulum Berbasis Cinta (Panca Cinta)</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Word (.doc)</button>
@@ -323,11 +325,10 @@
     </main>
 
     <footer>
-        <p>© 2026 Aplikasi Layanan BK Modern - MTsN 7 Tasikmalaya (Multi-User Ready)</p>
+        <p>© 2026 Aplikasi Layanan BK Modern - MTsN 7 Tasikmalaya (Berbasis Kurikulum Cinta)</p>
     </footer>
 
     <script>
-        // System Config Admin PIN (Default: 1234)
         const ADMIN_PIN = "1234";
         let isAdminLoggedIn = false;
 
@@ -353,22 +354,23 @@
             { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
         ];
 
+        // MENGINTEGRASIKAN PANCA CINTA DALAM REKOMENDASI PROGRAM BK
         const REKOMENDASI_PROGRAM = [
-            { topik: 0, bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat Remaja", strategi: "Bimbingan Klasikal / Edukasi Kesehatan", sem: "Semester 1", bulan: "Juli / Agustus" },
-            { topik: 1, bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Saku Siswa", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "September" },
-            { topik: 2, bidang: "Bimbingan Pribadi", materi: "Membangun Komunikasi Efektif & Keharmonisan dengan Keluarga", strategi: "Konseling Individual / Home Visit", sem: "Semester 1", bulan: "Oktober" },
-            { topik: 3, bidang: "Bimbingan Agama/Moral", materi: "Pembentukan Karakter Islami & Kedisiplinan Ibadah", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "November" },
-            { topik: 4, bidang: "Bimbingan Pribadi", materi: "Pemanfaatan Waktu Luang & Pengembangan Bakat/Hobi", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "Desember" },
-            { topik: 5, bidang: "Bimbingan Pribadi", materi: "Meningkatkan Rasa Percaya Diri & Manajemen Kecemasan", strategi: "Konseling Individual / Bimbingan Kelompok", sem: "Semester 2", bulan: "Januari" },
-            { topik: 6, bidang: "Bimbingan Sosial", materi: "Etika Bergaul & Keterampilan Interaksi Sosial Teman Sebaya", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Februari" },
-            { topik: 7, bidang: "Bimbingan Pribadi", materi: "Memahami Pubertas & Kesehatan Reproduksi Remaja Madrasah", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Maret" },
-            { topik: 8, bidang: "Bimbingan Sosial", materi: "Adaptasi Lingkungan Sekolah & Kedisiplinan Tata Tertib", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "April" },
-            { topik: 9, bidang: "Bimbingan Belajar", materi: "Strategi Memahami Mata Pelajaran Sukar & Diskusi Kelompok", strategi: "Bimbingan Kelompok", sem: "Semester 2", bulan: "Mei" },
-            { topik: 10, bidang: "Bimbingan Belajar", materi: "Teknik Belajar Efektif & Manajemen Waktu Mengerjakan Tugas", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Agustus" },
-            { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Karir Klasikal", sem: "Semester 2", bulan: "Januari / Februari" }
+            { topik: 0, pancaCinta: "Cinta Diri & Sesama", bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat sebagai Bentuk Syukur", strategi: "Bimbingan Klasikal / Edukasi Kesehatan", sem: "Semester 1", bulan: "Juli / Agustus" },
+            { topik: 1, pancaCinta: "Cinta Diri & Sesama", bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Uang Saku", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "September" },
+            { topik: 2, pancaCinta: "Cinta Diri & Sesama", bidang: "Bimbingan Pribadi & Sosial", materi: "Membangun Komunikasi Efektif & Keharmonisan dengan Keluarga", strategi: "Konseling Individual / Home Visit", sem: "Semester 1", bulan: "Oktober" },
+            { topik: 3, pancaCinta: "Cinta Allah & Rasul-Nya", bidang: "Bimbingan Spiritual", materi: "Pembentukan Karakter Islami & Kedisiplinan Ibadah Mahabbah", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "November" },
+            { topik: 4, pancaCinta: "Cinta Lingkungan", bidang: "Bimbingan Pribadi & Sosial", materi: "Pemanfaatan Waktu Luang, Hobi Positif & Kepedulian Lingkungan Sekitar", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "Desember" },
+            { topik: 5, pancaCinta: "Cinta Diri & Sesama", bidang: "Bimbingan Pribadi", materi: "Meningkatkan Rasa Percaya Diri & Penerimaan Diri (Self-Love)", strategi: "Konseling Individual / Bimbingan Kelompok", sem: "Semester 2", bulan: "Januari" },
+            { topik: 6, pancaCinta: "Cinta Diri & Sesama", bidang: "Bimbingan Sosial", materi: "Etika Bergaul, Empati, dan Saling Menghormati Teman Sebaya", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Februari" },
+            { topik: 7, pancaCinta: "Cinta Diri & Sesama", bidang: "Bimbingan Pribadi", materi: "Memahami Masa Pubertas & Menjaga Kehormatan Diri Remaja Madrasah", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Maret" },
+            { topik: 8, pancaCinta: "Cinta Tanah Air & Lingkungan", bidang: "Bimbingan Sosial", materi: "Adaptasi Lingkungan Sekolah, Budaya Bersih, dan Tata Tertib", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "April" },
+            { topik: 9, pancaCinta: "Cinta Ilmu", bidang: "Bimbingan Belajar", materi: "Semangat Menuntut Ilmu (Tholabul 'Ilmi) & Strategi Belajar Efektif", strategi: "Bimbingan Kelompok", sem: "Semester 2", bulan: "Mei" },
+            { topik: 10, pancaCinta: "Cinta Ilmu", bidang: "Bimbingan Belajar", materi: "Manajemen Waktu Belajar & Menghindari Penundaan Tugas (Prokrastinasi)", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Agustus" },
+            { topik: 11, pancaCinta: "Cinta Tanah Air", bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Cita-Cita Masa Depan untuk Mengabdi pada Bangsa", strategi: "Bimbingan Karir Klasikal", sem: "Semester 2", bulan: "Januari / Februari" }
         ];
 
-        /* --- SITEM AUTENTIKASI ADMIN BK --- */
+        /* --- AUTENTIKASI ADMIN BK --- */
         function toggleAdminAuth() {
             if (isAdminLoggedIn) {
                 if (confirm("Apakah Anda yakin ingin Logout dari Akses Admin BK?")) {
@@ -663,7 +665,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        /* --- GENERATE PROTA & PROMES --- */
+        /* --- GENERATE PROTA & PROMES BERBASIS PANCA CINTA --- */
         function generateProgramBK() {
             const targetKelas = document.getElementById('filter-prota-kelas').value;
             const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
@@ -694,23 +696,32 @@
 
             container.innerHTML = `
                 <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="font-size: 15px; color: #166534; margin-bottom: 4px;"><b>📊 Ringkasan Kebutuhan [${labelJudulTarget}]:</b></h3>
+                    <h3 style="font-size: 15px; color: #166534; margin-bottom: 4px;"><b>📊 Ringkasan Kebutuhan & Integrasi Panca Cinta [${labelJudulTarget}]:</b></h3>
                     <p style="font-size: 13px; color: #15803d;">
                         • Target Sasaran: <b>${labelJudulTarget}</b><br>
                         • Total Murid: <b>${targetMurid.length} Murid</b><br>
-                        • Isian DCM Masuk: <b>${totalResponSiswa} Respon Siswa</b>
+                        • Isian DCM Masuk: <b>${totalResponSiswa} Respon Siswa</b><br>
+                        • Landasan Karakter: <b>Panca Cinta (Cinta Allah & Rasul, Cinta Ilmu, Cinta Lingkungan, Cinta Diri & Sesama, Cinta Tanah Air)</b>
                     </p>
                 </div>
 
-                <h3 style="font-size: 16px; margin-bottom: 8px;">1. Program Tahunan (PROTA) BK</h3>
+                <h3 style="font-size: 16px; margin-bottom: 8px;">1. Program Tahunan (PROTA) BK Berbasis Panca Cinta</h3>
                 <table style="margin-bottom: 30px;">
                     <thead>
-                        <tr><th style="width: 40px;">No</th><th>Bidang Layanan</th><th>Materi Bimbingan</th><th>Strategi</th><th>Semester</th></tr>
+                        <tr>
+                            <th style="width: 35px;">No</th>
+                            <th>Nilai Panca Cinta</th>
+                            <th>Bidang Layanan</th>
+                            <th>Materi Bimbingan</th>
+                            <th>Strategi</th>
+                            <th>Semester</th>
+                        </tr>
                     </thead>
                     <tbody>
                         ${programPrioritas.map((p, idx) => `
                             <tr>
                                 <td>${idx + 1}</td>
+                                <td><span class="badge-pancacinta">❤️ ${p.pancaCinta}</span></td>
                                 <td><span class="badge-bidang">${p.bidang}</span></td>
                                 <td><b>${p.materi}</b><br><span style="font-size: 11px; color: #6b7280;">Topik: ${TOPIK_DCM[p.topik]} (${p.jumlah} dikeluhkan)</span></td>
                                 <td>${p.strategi}</td>
@@ -720,15 +731,22 @@
                     </tbody>
                 </table>
 
-                <h3 style="font-size: 16px; margin-bottom: 8px;">2. Program Semester (PROMES) BK</h3>
+                <h3 style="font-size: 16px; margin-bottom: 8px;">2. Program Semester (PROMES) BK Berbasis Panca Cinta</h3>
                 <table>
                     <thead>
-                        <tr><th style="width: 40px;">No</th><th>Materi Layanan BK</th><th>Semester</th><th>Perkiraan Bulan</th></tr>
+                        <tr>
+                            <th style="width: 35px;">No</th>
+                            <th>Nilai Panca Cinta</th>
+                            <th>Materi Layanan BK</th>
+                            <th>Semester</th>
+                            <th>Perkiraan Bulan</th>
+                        </tr>
                     </thead>
                     <tbody>
                         ${programPrioritas.map((p, idx) => `
                             <tr>
                                 <td>${idx + 1}</td>
+                                <td><span class="badge-pancacinta">❤️ ${p.pancaCinta}</span></td>
                                 <td><b>${p.materi}</b></td>
                                 <td>${p.sem}</td>
                                 <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">📅 ${p.bulan}</span></td>
@@ -818,7 +836,7 @@
             document.getElementById('btn-batal-soal').classList.add('hidden');
         }
 
-        /* --- EKSPOR & IMPOR NATIVE --- */
+        /* --- EKSPOR & IMPOR --- */
         function exportToExcel(type) {
             if(type === 'jurnal') {
                 const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
@@ -899,6 +917,7 @@
                 <head><title>Laporan BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #333; padding: 8px; text-align: left; }</style></head>
                 <body>
                     <h2 style="text-align: center; color: #047857;">${headerTitle}</h2>
+                    <p style="text-align: center; font-weight: bold; color: #047857;">Kurikulum Berbasis Cinta (Panca Cinta)</p>
                     <hr><br>${contentHTML}
                 </body>
                 </html>
@@ -998,7 +1017,6 @@
 
             alert('Jawaban DCM berhasil disimpan!');
             
-            // Uncheck semua box
             soalList.forEach(s => {
                 const el = document.getElementById(`soal-${s.id}`);
                 if(el) el.checked = false;
