@@ -46,6 +46,14 @@
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; flex-wrap: wrap; justify-content: space-between; }
+        .sub-tab-box { display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+        .sub-tab-btn { padding: 8px 16px; border: none; background: #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #4b5563; }
+        .sub-tab-btn.active { background: #047857; color: white; }
+        @media print {
+            header, footer, .tabs, .action-bar, .filter-box, .sub-tab-box, .role-badge { display: none !important; }
+            body { background: white; color: black; }
+            .card { box-shadow: none; padding: 0; }
+        }
     </style>
 </head>
 <body>
@@ -78,7 +86,7 @@
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
         </div>
 
-        <!-- TAB 1: FORM DCM SISWA (BISA DIAKSES OLEH SISWA & PUBLIC) -->
+        <!-- TAB 1: FORM DCM SISWA -->
         <section id="sec-dcm" class="card">
             <h2 style="font-size: 18px; margin-bottom: 8px;">Daftar Cek Masalah (DCM) Siswa</h2>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Pilih kelas dan nama siswa, kemudian berikan tanda centang pada pernyataan masalah yang dihadapi.</p>
@@ -111,7 +119,7 @@
             </div>
         </section>
 
-        <!-- TAB 2: DATA MURID (KHUSUS ADMIN) -->
+        <!-- TAB 2: DATA MURID -->
         <section id="sec-murid" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -177,19 +185,50 @@
             </table>
         </section>
 
-        <!-- TAB 3: PROFIL MASALAH -->
+        <!-- TAB 3: HASIL PROFIL KELOMPOK & DERAJAT INDIVIDU -->
         <section id="sec-profil" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h2 style="font-size: 18px;">Profil & Derajat Masalah Siswa</h2>
-                    <p style="font-size: 12px; color: #6b7280;">Analisis rekapitulasi data isian DCM siswa.</p>
+                    <h2 style="font-size: 18px;">Hasil Profil Masalah Siswa</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Analisis rekapitulasi data isian DCM secara kelompok maupun individu.</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
-                    <button onclick="exportToExcel('profil')" class="btn-excel">📊 Ekspor ke Excel</button>
-                    <button onclick="exportToWord('profil')" class="btn-word">📄 Ekspor Word</button>
+                    <button onclick="exportToExcel('profil')" class="btn-excel">📊 Ekspor Profil ke Excel</button>
+                    <button onclick="exportToWord('profil')" class="btn-word">📄 Ekspor Laporan Word</button>
                 </div>
             </div>
-            <div id="ringkasan-topik" style="display: grid; gap: 10px;"></div>
+
+            <!-- Sub Navigation Profil -->
+            <div class="sub-tab-box">
+                <button id="sub-btn-kelompok" onclick="switchSubProfil('kelompok')" class="sub-tab-btn active">📊 Profil Kelompok / Klasikal</button>
+                <button id="sub-btn-individu" onclick="switchSubProfil('individu')" class="sub-tab-btn">👤 Hasil Individu Siswa</button>
+            </div>
+
+            <!-- SUB TAB 3A: REKAP KELOMPOK -->
+            <div id="sub-sec-kelompok">
+                <div id="ringkasan-topik" style="display: grid; gap: 10px;"></div>
+            </div>
+
+            <!-- SUB TAB 3B: HASIL INDIVIDU -->
+            <div id="sub-sec-individu" class="hidden">
+                <div class="filter-box" style="justify-content: flex-start; gap: 16px;">
+                    <div>
+                        <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Pilih Kelas:</label>
+                        <select id="filter-profil-kelas" onchange="updateDropdownSiswaProfilIndividu()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Pilih Nama Siswa:</label>
+                        <select id="filter-profil-siswa" onchange="renderProfilIndividu()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; font-weight: bold; color: #047857;">
+                        </select>
+                    </div>
+                    <div style="margin-left: auto;">
+                        <button onclick="window.print()" class="btn-secondary" style="height: 34px;">🖨️ Cetak / Print PDF Laporan Individu</button>
+                    </div>
+                </div>
+
+                <div id="container-profil-individu"></div>
+            </div>
         </section>
 
         <!-- TAB 4: PROTA & PROMES BK -->
@@ -327,7 +366,6 @@
     </footer>
 
     <script>
-        // System Config Admin PIN (Default: 1234)
         const ADMIN_PIN = "1234";
         let isAdminLoggedIn = false;
 
@@ -376,7 +414,7 @@
                     document.getElementById('btn-login-admin').innerText = "🔒 Login Admin BK";
                     document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
                     switchTab('dcm');
-                    alert("Berhasil Logout. Mode kembali ke Akses Siswa.");
+                    alert("Berhasil Logout.");
                 }
             } else {
                 const pin = prompt("Masukkan PIN/Password Admin BK:");
@@ -384,7 +422,7 @@
                     isAdminLoggedIn = true;
                     document.getElementById('btn-login-admin').innerText = "🔓 Logout Admin BK";
                     document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                    alert("Akses Admin Berhasil Diberikan! Semua fitur manajemen BK telah terbuka.");
+                    alert("Akses Admin Berhasil Diberikan!");
                 } else if (pin !== null) {
                     alert("PIN Admin Salah!");
                 }
@@ -409,9 +447,113 @@
 
             if(tab === 'dcm') updateDropdownNamaSiswaDCM();
             if(tab === 'murid') renderTabelMurid();
-            if(tab === 'profil') loadProfil();
+            if(tab === 'profil') { loadProfil(); initProfilIndividu(); }
             if(tab === 'program') generateProgramBK();
             if(tab === 'editsoal') renderEditSoal();
+        }
+
+        /* --- LOGIKA SUB-TAB PROFIL & INDIVIDU --- */
+        function switchSubProfil(sub) {
+            document.getElementById('sub-sec-kelompok').classList.add('hidden');
+            document.getElementById('sub-sec-individu').classList.add('hidden');
+            document.getElementById('sub-btn-kelompok').classList.remove('active');
+            document.getElementById('sub-btn-individu').classList.remove('active');
+
+            document.getElementById(`sub-sec-${sub}`).classList.remove('hidden');
+            document.getElementById(`sub-btn-${sub}`).classList.add('active');
+
+            if(sub === 'individu') initProfilIndividu();
+        }
+
+        function initProfilIndividu() {
+            const kelasList = initKelas();
+            const filterKelas = document.getElementById('filter-profil-kelas');
+            filterKelas.innerHTML = kelasList.map(k => `<option value="${k}">${k}</option>`).join('');
+            updateDropdownSiswaProfilIndividu();
+        }
+
+        function updateDropdownSiswaProfilIndividu() {
+            const kelas = document.getElementById('filter-profil-kelas').value;
+            const dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const filterSiswa = document.getElementById('filter-profil-siswa');
+
+            const siswaDiKelas = dataIsian.filter(d => d.kelas === kelas);
+
+            if (siswaDiKelas.length > 0) {
+                filterSiswa.innerHTML = siswaDiKelas.map((d, i) => `<option value="${i}">${d.nama} (${d.tgl})</option>`).join('');
+            } else {
+                filterSiswa.innerHTML = `<option value="">-- Belum Ada Isian DCM di Kelas ${kelas} --</option>`;
+            }
+            renderProfilIndividu();
+        }
+
+        function renderProfilIndividu() {
+            const kelas = document.getElementById('filter-profil-kelas').value;
+            const selectIndex = document.getElementById('filter-profil-siswa').value;
+            const container = document.getElementById('container-profil-individu');
+
+            const dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const siswaDiKelas = dataIsian.filter(d => d.kelas === kelas);
+
+            if (!siswaDiKelas || siswaDiKelas.length === 0 || selectIndex === "") {
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #6b7280;">Belum ada data isian DCM untuk siswa di kelas ini.</div>`;
+                return;
+            }
+
+            const dataSiswa = siswaDiKelas[parseInt(selectIndex)];
+            const soalList = getDCMSoal();
+
+            let totalMasalahDicentang = 0;
+            let detailPerTopik = new Array(12).fill(0);
+            let itemMasalah = [];
+
+            dataSiswa.respon.forEach((r, idx) => {
+                if(r.isMasalah) {
+                    totalMasalahDicentang++;
+                    if(r.topik !== undefined) detailPerTopik[r.topik]++;
+                    const detailSoal = soalList[idx] ? soalList[idx].text : `Masalah no. ${idx+1}`;
+                    itemMasalah.push({ topik: TOPIK_DCM[r.topik] || "I. KESEHATAN", text: detailSoal });
+                }
+            });
+
+            const persentase = Math.round((totalMasalahDicentang / soalList.length) * 100);
+            let derajatLabel = "Rendah (Normal)";
+            let warnaDerajat = "#059669";
+
+            if (persentase > 50) {
+                derajatLabel = "Tinggi (Sangat Membutuhkan Konseling)";
+                warnaDerajat = "#dc2626";
+            } else if (persentase > 20) {
+                derajatLabel = "Sedang (Perlu Perhatian / Bimbingan)";
+                warnaDerajat = "#d97706";
+            }
+
+            container.innerHTML = `
+                <div style="border: 2px solid #047857; padding: 20px; border-radius: 8px; background: #fafafa;">
+                    <div style="text-align: center; border-bottom: 2px dashed #047857; padding-bottom: 12px; margin-bottom: 16px;">
+                        <h3 style="font-size: 16px; color: #047857;">LEMBAR HASIL ANALISIS DCM INDIVIDU SISWA</h3>
+                        <p style="font-size: 12px; color: #4b5563;">Layanan Bimbingan dan Konseling MTsN 7 Tasikmalaya</p>
+                    </div>
+
+                    <table style="width: 100%; margin-bottom: 16px; border: none;">
+                        <tr><td style="border:none; width: 140px;"><b>Nama Siswa</b></td><td style="border:none;">: <b>${dataSiswa.nama}</b></td></tr>
+                        <tr><td style="border:none;"><b>Kelas</b></td><td style="border:none;">: ${dataSiswa.kelas}</td></tr>
+                        <tr><td style="border:none;"><b>Tanggal Pengisian</b></td><td style="border:none;">: ${dataSiswa.tgl}</td></tr>
+                    </table>
+
+                    <div style="background: #ecfdf5; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid #047857;">
+                        <p style="font-size: 13px;">• Jumlah Masalah Dicentang: <b>${totalMasalahDicentang} dari ${soalList.length} Butir (${persentase}%)</b></p>
+                        <p style="font-size: 13px;">• Kategori Derajat Masalah: <b style="color: ${warnaDerajat};">${derajatLabel}</b></p>
+                    </div>
+
+                    <h4 style="font-size: 14px; margin-bottom: 8px; color: #047857;">Daftar Masalah yang Dikeluhkan Siswa:</h4>
+                    ${itemMasalah.length > 0 ? `
+                        <ol style="margin-left: 20px; font-size: 13px; line-height: 1.6;">
+                            ${itemMasalah.map(item => `<li><span style="font-size:11px; font-weight:bold; color:#047857;">[${item.topik}]</span> ${item.text}</li>`).join('')}
+                        </ol>
+                    ` : `<p style="font-size: 13px; color: #059669; font-style: italic;">Siswa tidak mencentang butir masalah (Kondisi Baik/Normal).</p>`}
+                </div>
+            `;
         }
 
         /* --- INTEGRASI SISWA MASTER KE TAB DCM --- */
@@ -891,7 +1033,7 @@
                 contentHTML = document.getElementById('container-program').innerHTML;
             } else if(type === 'profil') {
                 headerTitle = "REKAPITULASI PROFIL DERAJAT MASALAH SISWA";
-                contentHTML = document.getElementById('ringkasan-topik').innerHTML;
+                contentHTML = document.getElementById('sub-sec-kelompok').innerHTML;
             }
 
             const htmlContent = `
@@ -998,7 +1140,6 @@
 
             alert('Jawaban DCM berhasil disimpan!');
             
-            // Uncheck semua box
             soalList.forEach(s => {
                 const el = document.getElementById(`soal-${s.id}`);
                 if(el) el.checked = false;
@@ -1014,7 +1155,7 @@
                 <div style="display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
                     <span style="font-size: 13px; font-weight: 600;">${t}</span>
                     <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">
-                        ${counts[idx]} Masalah Dicentang
+                        ${counts[idx]} Masalah Dicentang Total
                     </span>
                 </div>
             `).join('');
@@ -1070,4 +1211,3 @@
     </script>
 </body>
 </html>
-
