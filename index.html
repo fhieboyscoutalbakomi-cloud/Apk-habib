@@ -85,8 +85,19 @@
 
         <!-- TAB 1: FORM DCM SISWA -->
         <section id="sec-dcm" class="card">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">Daftar Cek Masalah (DCM) Siswa</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Pilih kelas dan nama siswa, kemudian berikan tanda centang pada pernyataan masalah yang dihadapi.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px; margin-bottom: 4px;">Daftar Cek Masalah (DCM) Siswa</h2>
+                    <p style="font-size: 13px; color: #6b7280;">Pilih kelas dan nama siswa, kemudian berikan tanda centang pada masalah yang dihadapi, atau impor dari Excel.</p>
+                </div>
+                <!-- FITUR IMPOR EXCEL DCM -->
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="downloadTemplateDCMExcel()" class="btn-template">📑 Unduh Template DCM Excel</button>
+                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
+                        📥 Impor Jawaban DCM (.xlsx) <input type="file" accept=".xlsx, .xls, .csv" onchange="importDCMFromExcel(event)" style="display: none;">
+                    </label>
+                </div>
+            </div>
 
             <div class="form-grid">
                 <div class="form-group">
@@ -111,8 +122,8 @@
             <div id="container-soal"></div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                <span style="font-size: 11px; color: #6b7280;">*Dapat diisi saat offline maupun online.</span>
-                <button onclick="simpanResponDCM()" class="btn-primary">💾 Simpan Jawaban DCM</button>
+                <span style="font-size: 11px; color: #6b7280;">*Dapat diisi secara manual atau diimpor massal lewat file Excel.</span>
+                <button onclick="simpanResponDCM()" class="btn-primary">💾 Simpan Jawaban DCM Manual</button>
             </div>
         </section>
 
@@ -218,7 +229,7 @@
             <div id="container-program"></div>
         </section>
 
-        <!-- TAB 5: RPLBK STANDAR POP BK MTs (FITUR BARU) -->
+        <!-- TAB 5: RPLBK STANDAR POP BK MTs -->
         <section id="sec-rplbk" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -395,7 +406,6 @@
             { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
         ];
 
-        // INTEGRASI POP BK MGBK MTS & PANCA CINTA
         const REKOMENDASI_PROGRAM = [
             { topik: 0, pancaCinta: "Cinta Diri & Sesama", komponenPOP: "Layanan Dasar", bidang: "Bimbingan Pribadi", fungsi: "Pemahaman & Pencegahan", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat sebagai Bentuk Syukur", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Juli / Agustus" },
             { topik: 1, pancaCinta: "Cinta Diri & Sesama", komponenPOP: "Layanan Responsif", bidang: "Bimbingan Pribadi", fungsi: "Pengentasan", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Uang Saku", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "September" },
@@ -481,6 +491,76 @@
             if(selectedOption && selectedOption.dataset.jk) {
                 document.getElementById('siswa-jk').value = selectedOption.dataset.jk;
             }
+        }
+
+        /* --- FITUR IMPOR & TEMPLATE EXCEL JAWABAN DCM (FITUR BARU) --- */
+        function downloadTemplateDCMExcel() {
+            const dataTemplate = [
+                ["NAMA_SISWA", "KELAS", "KESEHATAN", "EKONOMI", "KELUARGA", "AGAMA_MORAL", "REKREASI_HOBI", "HUBUNGAN_PRIBADI", "SOSIAL", "MASALAH_REMAJA", "SEKOLAH", "KURIKULUM", "KEBIASAAN_BELAJAR", "CITA_CITA"],
+                ["AHDAN MAULANA", "IX-A", "YA", "TIDAK", "TIDAK", "YA", "TIDAK", "TIDAK", "TIDAK", "YA", "TIDAK", "TIDAK", "YA", "TIDAK"],
+                ["ANISA FITRI", "IX-A", "TIDAK", "YA", "TIDAK", "TIDAK", "TIDAK", "YA", "TIDAK", "TIDAK", "TIDAK", "YA", "TIDAK", "YA"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
+            ws['!cols'] = [
+                { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, 
+                { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, 
+                { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 12 }
+            ];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Respon DCM");
+            XLSX.writeFile(wb, "Template_Jawaban_DCM_Siswa.xlsx");
+        }
+
+        function importDCMFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if(jsonData.length > 1) {
+                    const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+                    let count = 0;
+
+                    for(let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if(row && row.length >= 2) {
+                            const nama = String(row[0] || "").toUpperCase().trim();
+                            const kelas = String(row[1] || "IX-A").trim().toUpperCase();
+
+                            if(nama) {
+                                const respon = [];
+                                // Loop 12 Topik DCM (Kolom index 2 s.d 13)
+                                for(let t = 0; t < 12; t++) {
+                                    const val = String(row[t + 2] || "").trim().toUpperCase();
+                                    const isMasalah = (val === 'YA' || val === '1' || val === 'TRUE' || val === 'Y') ? 1 : 0;
+                                    respon.push({ topik: t, isMasalah: isMasalah });
+                                }
+
+                                listData.push({
+                                    nama: nama,
+                                    kelas: kelas,
+                                    respon: respon,
+                                    tgl: new Date().toLocaleDateString('id-ID')
+                                });
+                                count++;
+                            }
+                        }
+                    }
+
+                    localStorage.setItem('dcm_data_list', JSON.stringify(listData));
+                    alert(`Berhasil mengimpor ${count} data respon DCM siswa dari file Excel!`);
+                    
+                    // Reset input file
+                    e.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         /* --- FITUR MANAJEMEN DATA MURID --- */
