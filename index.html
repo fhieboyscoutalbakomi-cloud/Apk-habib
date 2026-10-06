@@ -38,6 +38,7 @@
         .btn-template { background-color: #0d9488; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-word { background-color: #1d4ed8; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-danger { background-color: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-warning { background-color: #d97706; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
         th { background-color: #047857; color: white; }
@@ -49,8 +50,13 @@
         .sub-tab-box { display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
         .sub-tab-btn { padding: 8px 16px; border: none; background: #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #4b5563; }
         .sub-tab-btn.active { background: #047857; color: white; }
+        
+        /* Modal Style untuk Edit Jawaban */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
+
         @media print {
-            header, footer, .tabs, .action-bar, .filter-box, .sub-tab-box, .role-badge { display: none !important; }
+            header, footer, .tabs, .action-bar, .filter-box, .sub-tab-box, .role-badge, .btn-action-group { display: none !important; }
             body { background: white; color: black; }
             .card { box-shadow: none; padding: 0; }
         }
@@ -222,8 +228,8 @@
                         <select id="filter-profil-siswa" onchange="renderProfilIndividu()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; font-weight: bold; color: #047857;">
                         </select>
                     </div>
-                    <div style="margin-left: auto;">
-                        <button onclick="window.print()" class="btn-secondary" style="height: 34px;">🖨️ Cetak / Print PDF Laporan Individu</button>
+                    <div style="margin-left: auto;" class="btn-action-group">
+                        <button onclick="window.print()" class="btn-secondary" style="height: 34px;">🖨️ Cetak / Print PDF</button>
                     </div>
                 </div>
 
@@ -361,6 +367,20 @@
         </section>
     </main>
 
+    <!-- MODAL EDIT JAWABAN SISWA -->
+    <div id="modal-edit-jawaban" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="font-size: 16px; margin-bottom: 8px; color: #047857;">✏️ Edit Isian Jawaban DCM Siswa</h3>
+            <p id="modal-edit-siswa-info" style="font-size: 12px; color: #6b7280; margin-bottom: 16px;"></p>
+            <input type="hidden" id="edit-dcm-global-index">
+            <div id="container-modal-edit-soal"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+                <button onclick="tutupModalEditJawaban()" class="btn-danger">Batal</button>
+                <button onclick="simpanPerubahanJawabanDCM()" class="btn-primary">💾 Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <p>© 2026 Aplikasi Layanan BK Modern - MTsN 7 Tasikmalaya (Multi-User Ready)</p>
     </footer>
@@ -406,7 +426,7 @@
             { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Karir Klasikal", sem: "Semester 2", bulan: "Januari / Februari" }
         ];
 
-        /* --- SITEM AUTENTIKASI ADMIN BK --- */
+        /* --- AUTENTIKASI ADMIN --- */
         function toggleAdminAuth() {
             if (isAdminLoggedIn) {
                 if (confirm("Apakah Anda yakin ingin Logout dari Akses Admin BK?")) {
@@ -452,7 +472,7 @@
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- LOGIKA SUB-TAB PROFIL & INDIVIDU --- */
+        /* --- SUB-TAB PROFIL & INDIVIDU --- */
         function switchSubProfil(sub) {
             document.getElementById('sub-sec-kelompok').classList.add('hidden');
             document.getElementById('sub-sec-individu').classList.add('hidden');
@@ -477,10 +497,15 @@
             const dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
             const filterSiswa = document.getElementById('filter-profil-siswa');
 
-            const siswaDiKelas = dataIsian.filter(d => d.kelas === kelas);
+            const siswaDiKelas = [];
+            dataIsian.forEach((d, globalIndex) => {
+                if (d.kelas === kelas) {
+                    siswaDiKelas.push({ ...d, globalIndex });
+                }
+            });
 
             if (siswaDiKelas.length > 0) {
-                filterSiswa.innerHTML = siswaDiKelas.map((d, i) => `<option value="${i}">${d.nama} (${d.tgl})</option>`).join('');
+                filterSiswa.innerHTML = siswaDiKelas.map(d => `<option value="${d.globalIndex}">${d.nama} (${d.tgl})</option>`).join('');
             } else {
                 filterSiswa.innerHTML = `<option value="">-- Belum Ada Isian DCM di Kelas ${kelas} --</option>`;
             }
@@ -488,35 +513,32 @@
         }
 
         function renderProfilIndividu() {
-            const kelas = document.getElementById('filter-profil-kelas').value;
             const selectIndex = document.getElementById('filter-profil-siswa').value;
             const container = document.getElementById('container-profil-individu');
 
             const dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-            const siswaDiKelas = dataIsian.filter(d => d.kelas === kelas);
 
-            if (!siswaDiKelas || siswaDiKelas.length === 0 || selectIndex === "") {
+            if (selectIndex === "" || !dataIsian[parseInt(selectIndex)]) {
                 container.innerHTML = `<div style="padding: 20px; text-align: center; color: #6b7280;">Belum ada data isian DCM untuk siswa di kelas ini.</div>`;
                 return;
             }
 
-            const dataSiswa = siswaDiKelas[parseInt(selectIndex)];
+            const globalIndex = parseInt(selectIndex);
+            const dataSiswa = dataIsian[globalIndex];
             const soalList = getDCMSoal();
 
             let totalMasalahDicentang = 0;
-            let detailPerTopik = new Array(12).fill(0);
             let itemMasalah = [];
 
             dataSiswa.respon.forEach((r, idx) => {
                 if(r.isMasalah) {
                     totalMasalahDicentang++;
-                    if(r.topik !== undefined) detailPerTopik[r.topik]++;
                     const detailSoal = soalList[idx] ? soalList[idx].text : `Masalah no. ${idx+1}`;
                     itemMasalah.push({ topik: TOPIK_DCM[r.topik] || "I. KESEHATAN", text: detailSoal });
                 }
             });
 
-            const persentase = Math.round((totalMasalahDicentang / soalList.length) * 100);
+            const persentase = Math.round((totalMasalahDicentang / (soalList.length || 1)) * 100);
             let derajatLabel = "Rendah (Normal)";
             let warnaDerajat = "#059669";
 
@@ -529,10 +551,15 @@
             }
 
             container.innerHTML = `
-                <div style="border: 2px solid #047857; padding: 20px; border-radius: 8px; background: #fafafa;">
+                <div style="border: 2px solid #047857; padding: 20px; border-radius: 8px; background: #fafafa; position: relative;">
                     <div style="text-align: center; border-bottom: 2px dashed #047857; padding-bottom: 12px; margin-bottom: 16px;">
                         <h3 style="font-size: 16px; color: #047857;">LEMBAR HASIL ANALISIS DCM INDIVIDU SISWA</h3>
                         <p style="font-size: 12px; color: #4b5563;">Layanan Bimbingan dan Konseling MTsN 7 Tasikmalaya</p>
+                    </div>
+
+                    <div class="btn-action-group" style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px;">
+                        <button onclick="bukaModalEditJawaban(${globalIndex})" class="btn-warning">✏️ Edit Jawaban</button>
+                        <button onclick="hapusJawabanDCM(${globalIndex})" class="btn-danger">🗑️ Hapus Jawaban</button>
                     </div>
 
                     <table style="width: 100%; margin-bottom: 16px; border: none;">
@@ -556,7 +583,71 @@
             `;
         }
 
-        /* --- INTEGRASI SISWA MASTER KE TAB DCM --- */
+        /* --- FITUR EDIT & HAPUS JAWABAN DCM --- */
+        function hapusJawabanDCM(globalIndex) {
+            let dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const targetSiswa = dataIsian[globalIndex];
+
+            if (confirm(`Apakah Anda yakin ingin menghapus data jawaban DCM dari siswa ${targetSiswa.nama} (${targetSiswa.kelas})?`)) {
+                dataIsian.splice(globalIndex, 1);
+                localStorage.setItem('dcm_data_list', JSON.stringify(dataIsian));
+                alert("Data jawaban DCM berhasil dihapus!");
+                loadProfil();
+                updateDropdownSiswaProfilIndividu();
+                generateProgramBK();
+            }
+        }
+
+        function bukaModalEditJawaban(globalIndex) {
+            const dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const targetSiswa = dataIsian[globalIndex];
+            const soalList = getDCMSoal();
+
+            document.getElementById('edit-dcm-global-index').value = globalIndex;
+            document.getElementById('modal-edit-siswa-info').innerText = `Siswa: ${targetSiswa.nama} | Kelas: ${targetSiswa.kelas} | Tgl: ${targetSiswa.tgl}`;
+
+            const containerEdit = document.getElementById('container-modal-edit-soal');
+            containerEdit.innerHTML = soalList.map((s, idx) => {
+                const isChecked = targetSiswa.respon[idx] && targetSiswa.respon[idx].isMasalah === 1;
+                return `
+                    <div class="soal-item">
+                        <div>
+                            <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span>
+                            <p style="font-size: 13px; font-weight: 500;">${idx + 1}. ${s.text}</p>
+                        </div>
+                        <input type="checkbox" id="edit-modal-soal-${idx}" ${isChecked ? 'checked' : ''} style="width: 20px; height: 20px;">
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('modal-edit-jawaban').classList.remove('hidden');
+        }
+
+        function tutupModalEditJawaban() {
+            document.getElementById('modal-edit-jawaban').classList.add('hidden');
+        }
+
+        function simpanPerubahanJawabanDCM() {
+            const globalIndex = parseInt(document.getElementById('edit-dcm-global-index').value);
+            let dataIsian = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const soalList = getDCMSoal();
+
+            const responBaru = soalList.map((s, idx) => ({
+                topik: s.topik,
+                isMasalah: document.getElementById(`edit-modal-soal-${idx}`).checked ? 1 : 0
+            }));
+
+            dataIsian[globalIndex].respon = responBaru;
+            localStorage.setItem('dcm_data_list', JSON.stringify(dataIsian));
+
+            alert("Perubahan jawaban DCM berhasil disimpan!");
+            tutupModalEditJawaban();
+            loadProfil();
+            renderProfilIndividu();
+            generateProgramBK();
+        }
+
+        /* --- LOGIKA SISWA & DATA MURID --- */
         function updateDropdownNamaSiswaDCM() {
             const kelasDipilih = document.getElementById('siswa-kelas').value;
             const muridList = getMuridData();
@@ -581,7 +672,6 @@
             }
         }
 
-        /* --- FITUR MANAJEMEN DATA MURID --- */
         function downloadTemplateExcel() {
             const dataTemplate = [
                 ["NIS", "NAMA", "KELAS", "JK"],
@@ -739,7 +829,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        /* --- FITUR IMPOR & EKSPOR ANGKET --- */
+        /* --- ANGKET IMPOR/EKSPOR --- */
         function downloadTemplateAngketExcel() {
             const dataTemplate = [
                 ["BIDANG_TOPIK", "PERNYATAAN_MASALAH"],
