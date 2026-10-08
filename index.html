@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Layanan BK - MTsN 7 Tasikmalaya Melayanai, Mendampingi, Menginspirasi</title>
-    <!-- Library SheetJS untuk Ekspor & Impor File Excel -->
+    <title>Layanan BK Modern - MTsN 7 Tasikmalaya</title>
+    <!-- Library SheetJS untuk Ekspor & Impor File Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
     <!-- Firebase SDK (Sistem Sinkronisasi Data Antar Perangkat Realtime) -->
@@ -72,7 +72,7 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, RPL POP BK & Materi KBC</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, RPL POP BK & Kebijakan Excel Aktiv</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -95,10 +95,22 @@
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
         </div>
 
-        <!-- TAB 1: ISI DCM -->
+        <!-- TAB 1: ISI DCM SISWA (LENGKAP DENGAN FITUR EXCEL) -->
         <section id="sec-dcm" class="card">
-            <h2 style="font-size: 18px; margin-bottom: 8px;">Daftar Cek Masalah (DCM) Siswa</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Pilih kelas dan nama siswa, kemudian berikan tanda centang pada pernyataan masalah yang dihadapi.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px;">Daftar Cek Masalah (DCM) Siswa</h2>
+                    <p style="font-size: 13px; color: #6b7280;">Pilih kelas dan nama siswa, atau impor data jawaban via file Excel secara kolektif.</p>
+                </div>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="downloadTemplateJawabanDCMExcel()" class="btn-template">📑 Unduh Template Jawaban Excel</button>
+                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
+                        📥 Impor Jawaban DCM (.xlsx) <input type="file" id="import-dcm-file" accept=".xlsx, .xls, .csv" onchange="importResponDCMFromExcel(event)" style="display: none;">
+                    </label>
+                    <button onclick="exportResponDCMToExcel()" class="btn-excel">📊 Ekspor Hasil Jawaban Excel</button>
+                </div>
+            </div>
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>Pilih Kelas</label>
@@ -127,7 +139,7 @@
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="downloadTemplateExcel()" class="btn-template">📑 Unduh Template Excel</button>
                     <label class="btn-excel" style="display: inline-block; cursor: pointer;">
-                        📥 Impor Murid (.xlsx) <input type="file" accept=".xlsx, .xls, .csv" onchange="importMuridFromExcel(event)" style="display: none;">
+                        📥 Impor Murid (.xlsx) <input type="file" id="import-murid-file" accept=".xlsx, .xls, .csv" onchange="importMuridFromExcel(event)" style="display: none;">
                     </label>
                     <button onclick="exportMuridToExcel()" class="btn-excel">📊 Ekspor Excel</button>
                 </div>
@@ -286,7 +298,15 @@
 
         <!-- TAB 7: JURNAL -->
         <section id="sec-jurnal" class="card hidden">
-            <h2 style="font-size: 18px; margin-bottom: 12px;">Jurnal Bimbingan BK</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="font-size: 18px;">Jurnal Bimbingan BK</h2>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <label class="btn-excel" style="display: inline-block; cursor: pointer;">
+                        📥 Impor Jurnal (.xlsx) <input type="file" id="import-excel-file" accept=".xlsx, .xls, .csv" onchange="importJurnalFromExcel(event)" style="display: none;">
+                    </label>
+                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal</button>
+                </div>
+            </div>
             <form onsubmit="tambahJurnal(event)" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                 <div class="form-grid" style="background: none; padding: 0;">
                     <div class="form-group"><label>Nama Siswa</label><input type="text" id="jurnal-nama" required></div>
@@ -308,7 +328,7 @@
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="downloadTemplateAngketExcel()" class="btn-template">📑 Unduh Template Angket</button>
                     <label class="btn-excel" style="display: inline-block; cursor: pointer;">
-                        📥 Impor Angket (.xlsx) <input type="file" accept=".xlsx, .xls, .csv" onchange="importAngketFromExcel(event)" style="display: none;">
+                        📥 Impor Angket (.xlsx) <input type="file" id="import-angket-file" accept=".xlsx, .xls, .csv" onchange="importAngketFromExcel(event)" style="display: none;">
                     </label>
                     <button onclick="exportAngketToExcel()" class="btn-excel">📊 Ekspor Angket</button>
                     <button onclick="hapusSemuaSoalAngket()" class="btn-danger">🗑️ Hapus Semua Butir Angket</button>
@@ -368,10 +388,10 @@
             appId: "1:123456789:web:abcdef123456"
         };
 
-        if (!firebase.apps.length) {
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        const db = firebase.database();
+        const db = typeof firebase !== 'undefined' ? firebase.database() : null;
 
         const ADMIN_PIN = "1234";
         let isAdminLoggedIn = false;
@@ -399,7 +419,6 @@
             { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
         ];
 
-        // MASTER REFERENSI MATERI BK BERBASIS KURIKULUM BERBASIS CINTA (KBC)
         const BANK_MATERI_KBC = [
             {
                 pilar: "Cinta Allah dan Rasul-Nya",
@@ -459,21 +478,23 @@
         ];
 
         // REALTIME LISTENER FIREBASE
-        db.ref('dcm_data_list').on('value', (snapshot) => {
-            const dataObj = snapshot.val();
-            cloudDCMList = [];
-            if (dataObj) {
-                Object.keys(dataObj).forEach(key => {
-                    cloudDCMList.push({ keyFirebase: key, ...dataObj[key] });
-                });
-            }
-            localStorage.setItem('dcm_data_list', JSON.stringify(cloudDCMList));
-            if (isAdminLoggedIn) {
-                loadProfil();
-                updateDropdownSiswaProfilIndividu();
-                generateProgramBK();
-            }
-        });
+        if(db) {
+            db.ref('dcm_data_list').on('value', (snapshot) => {
+                const dataObj = snapshot.val();
+                cloudDCMList = [];
+                if (dataObj) {
+                    Object.keys(dataObj).forEach(key => {
+                        cloudDCMList.push({ keyFirebase: key, ...dataObj[key] });
+                    });
+                }
+                localStorage.setItem('dcm_data_list', JSON.stringify(cloudDCMList));
+                if (isAdminLoggedIn) {
+                    loadProfil();
+                    updateDropdownSiswaProfilIndividu();
+                    generateProgramBK();
+                }
+            });
+        }
 
         // AUTHENTIKASI ADMIN
         function toggleAdminAuth() {
@@ -510,10 +531,324 @@
             if(tab === 'program') generateProgramBK();
             if(tab === 'rpl') initRPLForm();
             if(tab === 'materikbc') renderBankMateriKBC();
+            if(tab === 'jurnal') renderJurnal();
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FUNGSI RPL POP BK & KBC GENERATOR --- */
+        /* --- FUNGSI MODUL EXCEL LENGKAP & AKTIF UNTUK SEMUA TAB --- */
+
+        // 1. DOWLOAD TEMPLATE EXCEL ISIAN JAWABAN DCM
+        function downloadTemplateJawabanDCMExcel() {
+            const soalList = getDCMSoal();
+            const header = ["NAMA_SISWA", "KELAS", "JENIS_KELAMIN"];
+            soalList.forEach((s, idx) => {
+                header.push(`SOAL_${idx + 1}`);
+            });
+
+            const dataTemplate = [
+                header,
+                ["AHDAN MAULANA", "IX-A", "L", ...soalList.map(() => 0)],
+                ["ANISA FITRI", "IX-A", "P", ...soalList.map((s, idx) => idx % 2 === 0 ? 1 : 0)]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template Jawaban DCM");
+            XLSX.writeFile(wb, "Template_Jawaban_DCM_Siswa.xlsx");
+        }
+
+        // 2. IMPOR JAWABAN DCM SISWA DARI EXCEL
+        function importResponDCMFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if(jsonData.length > 1) {
+                        const soalList = getDCMSoal();
+                        let count = 0;
+
+                        for(let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if(row && row.length >= 3) {
+                                const nama = String(row[0] || "").toUpperCase().trim();
+                                const kelas = String(row[1] || "IX-A").trim();
+                                if(!nama) continue;
+
+                                const respon = [];
+                                for(let j = 0; j < soalList.length; j++) {
+                                    const val = parseInt(row[j + 3]) || 0;
+                                    respon.push({
+                                        topik: soalList[j].topik,
+                                        isMasalah: val === 1 ? 1 : 0
+                                    });
+                                }
+
+                                const dataBaru = { nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') };
+
+                                if(db) {
+                                    db.ref('dcm_data_list').push(dataBaru);
+                                } else {
+                                    const localList = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+                                    localList.push(dataBaru);
+                                    localStorage.setItem('dcm_data_list', JSON.stringify(localList));
+                                }
+                                count++;
+                            }
+                        }
+                        alert(`Berhasil mengimpor ${count} data jawaban DCM siswa dari Excel!`);
+                        if(isAdminLoggedIn) { loadProfil(); generateProgramBK(); }
+                    }
+                } catch(err) {
+                    alert("Gagal memproses file Excel. Pastikan format sesuai template.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 3. EKSPOR JAWABAN DCM KE EXCEL
+        function exportResponDCMToExcel() {
+            const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const soalList = getDCMSoal();
+
+            if(listData.length === 0) return alert("Belum ada data isian jawaban DCM yang tersimpan!");
+
+            const header = ["TANGGAL", "NAMA_SISWA", "KELAS", "TOTAL_MASALAH"];
+            soalList.forEach((s, idx) => header.push(`P_${idx + 1}`));
+
+            const dataExport = [header];
+
+            listData.forEach(item => {
+                let total = 0;
+                const rowRespon = [];
+                soalList.forEach((s, idx) => {
+                    const isM = item.respon[idx] && item.respon[idx].isMasalah === 1 ? 1 : 0;
+                    if(isM) total++;
+                    rowRespon.push(isM);
+                });
+                dataExport.push([item.tgl, item.nama, item.kelas, total, ...rowRespon]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(dataExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Hasil DCM Siswa");
+            XLSX.writeFile(wb, "Hasil_Isian_DCM_Siswa.xlsx");
+        }
+
+        // 4. TEMPLATE & EXPORT/IMPORT DATA MURID
+        function downloadTemplateExcel() {
+            const dataTemplate = [
+                ["NIS", "NAMA", "KELAS", "JK"],
+                ["0081122334", "AHDAN MAULANA", "IX-A", "L"],
+                ["0085566778", "ANISA FITRI", "IX-A", "P"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
+            ws['!cols'] = [{ wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Daftar Siswa");
+            XLSX.writeFile(wb, "Template_Daftar_Siswa_BK.xlsx");
+        }
+
+        function exportMuridToExcel() {
+            const list = getMuridData();
+            const dataExport = [["NIS", "NAMA", "KELAS", "JK"]];
+            list.forEach(m => dataExport.push([m.nisn, m.nama, m.kelas, m.jk]));
+
+            const ws = XLSX.utils.aoa_to_sheet(dataExport);
+            ws['!cols'] = [{ wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Murid");
+            XLSX.writeFile(wb, "Daftar_Murid_MTsN7.xlsx");
+        }
+
+        function importMuridFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if(jsonData.length > 1) {
+                        const list = getMuridData();
+                        let count = 0;
+
+                        for(let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if(row && row.length > 0) {
+                                const nisn = String(row[0] || `ID_${Date.now()}_${i}`).trim();
+                                const nama = String(row[1] || "").toUpperCase().trim();
+                                const kelas = String(row[2] || "IX-A").trim();
+                                const jk = String(row[3] || "L").toUpperCase().trim();
+
+                                if(nama && !list.some(m => m.nisn === nisn)) {
+                                    list.push({ nisn, nama, kelas, jk });
+                                    count++;
+                                }
+                            }
+                        }
+
+                        localStorage.setItem('master_murid', JSON.stringify(list));
+                        renderTabelMurid();
+                        alert(`Berhasil mengimpor ${count} data murid baru dari Excel!`);
+                    }
+                } catch(err) {
+                    alert("Gagal mengimpor file data murid Excel.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 5. TEMPLATE & EXPORT/IMPORT ANGKET
+        function downloadTemplateAngketExcel() {
+            const dataTemplate = [
+                ["BIDANG_TOPIK", "PERNYATAAN_MASALAH"],
+                ["I. KESEHATAN", "Sering merasa pusing atau sakit saat mengikuti pelajaran."],
+                ["XI. KEBIASAAN BELAJAR", "Sulit mengatur waktu antara belajar dan bermain game."]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(dataTemplate);
+            ws['!cols'] = [{ wch: 30 }, { wch: 60 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template Angket");
+            XLSX.writeFile(wb, "Template_Angket_DCM.xlsx");
+        }
+
+        function exportAngketToExcel() {
+            const soalList = getDCMSoal();
+            const dataExport = [["BIDANG_TOPIK", "PERNYATAAN_MASALAH"]];
+            soalList.forEach(s => dataExport.push([TOPIK_DCM[s.topik] || "I. KESEHATAN", s.text]));
+
+            const ws = XLSX.utils.aoa_to_sheet(dataExport);
+            ws['!cols'] = [{ wch: 30 }, { wch: 60 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Daftar Soal DCM");
+            XLSX.writeFile(wb, "Daftar_Pernyataan_Angket_DCM.xlsx");
+        }
+
+        function importAngketFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if(jsonData.length > 1) {
+                        let soalList = getDCMSoal();
+                        let count = 0;
+
+                        for(let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if(row && row.length > 0) {
+                                const topikStr = String(row[0] || "").trim().toUpperCase();
+                                const text = String(row[1] || "").trim();
+
+                                if(text) {
+                                    let topikIndex = TOPIK_DCM.findIndex(t => t.toUpperCase().includes(topikStr) || topikStr.includes(t.toUpperCase()));
+                                    if(topikIndex === -1) topikIndex = 0;
+
+                                    soalList.push({ id: Date.now() + Math.floor(Math.random() * 1000) + i, topik: topikIndex, text: text });
+                                    count++;
+                                }
+                            }
+                        }
+
+                        localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
+                        renderEditSoal();
+                        alert(`Berhasil mengimpor ${count} butir pernyataan angket DCM!`);
+                    }
+                } catch(err) {
+                    alert("Gagal mengimpor file angket Excel.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 6. EXPORT & IMPORT JURNAL
+        function exportToExcel(type) {
+            if(type === 'jurnal') {
+                const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+                const dataExport = [["Tanggal", "Nama Siswa", "Jenis Layanan", "Ringkasan Permasalahan"]];
+                list.forEach(i => dataExport.push([i.tgl, i.nama, i.jenis, i.masalah]));
+
+                const ws = XLSX.utils.aoa_to_sheet(dataExport);
+                ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 40 }];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Jurnal BK");
+                XLSX.writeFile(wb, "Jurnal_Konseling_BK_MTsN7.xlsx");
+            } else if(type === 'profil') {
+                const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+                const counts = new Array(12).fill(0);
+                data.forEach(item => { item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); });
+                
+                const dataExport = [["Bidang Topik DCM", "Jumlah Dicentang Siswa", "Status Derajat Masalah"]];
+                TOPIK_DCM.forEach((t, idx) => {
+                    dataExport.push([t, counts[idx], counts[idx] > 0 ? "Membutuhkan Konseling" : "Normal"]);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(dataExport);
+                ws['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 25 }];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Profil Masalah");
+                XLSX.writeFile(wb, "Profil_Derajat_Masalah_DCM.xlsx");
+            }
+        }
+
+        function importJurnalFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if(jsonData.length > 1) {
+                        const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+                        for(let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if(row && row.length > 0) {
+                                list.unshift({
+                                    tgl: String(row[0] || new Date().toLocaleDateString('id-ID')),
+                                    nama: String(row[1] || "Siswa Import"),
+                                    jenis: String(row[2] || "Konseling Individual"),
+                                    masalah: String(row[3] || "-")
+                                });
+                            }
+                        }
+                        localStorage.setItem('jurnal_bk', JSON.stringify(list));
+                        renderJurnal();
+                        alert("Berhasil mengimpor data jurnal BK dari Excel!");
+                    }
+                } catch(err) {
+                    alert("Gagal mengimpor file jurnal Excel.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        /* --- FUNGSI RPL & KBC BANK MATERI --- */
         function initRPLForm() {
             const kelasList = initKelas();
             document.getElementById('rpl-kelas').innerHTML = kelasList.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
@@ -552,7 +887,6 @@
                         <p style="font-size: 11px; color: #6b7280;">MTsN 7 Tasikmalaya - Tahun Ajaran 2026/2027</p>
                     </div>
 
-                    <!-- IDENTITAS RPL -->
                     <table style="width: 100%; margin-bottom: 16px; border: 1px solid #d1d5db;">
                         <tr><td style="width: 180px; background: #ecfdf5;"><b>Jenis Layanan</b></td><td>${jenisLayanan}</td><td style="width: 180px; background: #ecfdf5;"><b>Sasaran Kelas</b></td><td>Kelas ${kelas}</td></tr>
                         <tr><td style="background: #ecfdf5;"><b>Bidang Layanan</b></td><td><span class="badge-bidang">${bidang}</span></td><td style="background: #ecfdf5;"><b>Alokasi Waktu</b></td><td>${waktu}</td></tr>
@@ -560,7 +894,6 @@
                         <tr><td style="background: #ecfdf5;"><b>Topik / Tema Layanan</b></td><td colspan="3"><b>${topik}</b></td></tr>
                     </table>
 
-                    <!-- A. TUJUAN LAYANAN -->
                     <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
                         <div class="program-section-title" style="font-size: 13px;">A. TUJUAN LAYANAN</div>
                         <p style="font-size: 12px; line-height: 1.5;"><b>1. Tujuan Umum:</b> ${refMateri.tujuan}</p>
@@ -572,7 +905,6 @@
                         </ul>
                     </div>
 
-                    <!-- B. METODE, MEDIA, DAN ALAT -->
                     <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
                         <div class="program-section-title" style="font-size: 13px;">B. METODE, MEDIA, DAN ALAT LAYANAN</div>
                         <p style="font-size: 12px;">• <b>Metode / Teknik:</b> Experiential Learning, Diskusi Kelompok, Refleksi Diri (Love-Based Reflection), Curah Pendapat.</p>
@@ -580,7 +912,6 @@
                         <p style="font-size: 12px;">• <b>Sumber Material:</b> ${refMateri.referensi}.</p>
                     </div>
 
-                    <!-- C. LANGKAH-LANGKAH KEGIATAN LAYANAN -->
                     <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
                         <div class="program-section-title" style="font-size: 13px;">C. LANGKAH-LANGKAH KEGIATAN LAYANAN</div>
                         <table style="width: 100%; margin-top: 6px;">
@@ -589,7 +920,7 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td><b>1. Tahap Awal / Pendahuluan</b></td>
+                                    <td><b>1. Tahap Awal</b></td>
                                     <td>
                                         • Guru BK membuka layanan dengan salam hangat, doa bersama, dan pembacaan ayat Al-Qur'an (Integrasi Pilar Cinta Allah).<br>
                                         • Guru BK melakukan pembinaan suasana kelas yang ramah, melakukan *ice breaking* berbasis kasih sayang.<br>
@@ -598,7 +929,7 @@
                                     <td>10 Menit</td>
                                 </tr>
                                 <tr>
-                                    <td><b>2. Tahap Inti (Kegiatan Utama)</b></td>
+                                    <td><b>2. Tahap Inti</b></td>
                                     <td>
                                         • Guru BK menayangkan ilustrasi/video materi: <i>"${topik}"</i>.<br>
                                         • Peserta didik berdiskusi dalam kelompok kecil untuk membahas lembar refleksi KBC.<br>
@@ -608,7 +939,7 @@
                                     <td>60 Menit</td>
                                 </tr>
                                 <tr>
-                                    <td><b>3. Tahap Penutup & Refleksi</b></td>
+                                    <td><b>3. Tahap Penutup</b></td>
                                     <td>
                                         • Peserta didik menyimpulkan nilai utama yang diperoleh dari kegiatan bimbingan.<br>
                                         • Guru BK memberikan penguatan (reinforcement) nilai <b>${pilarKBC}</b> dan doa penutup.
@@ -619,14 +950,12 @@
                         </table>
                     </div>
 
-                    <!-- D. EVALUASI LAYANAN -->
                     <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
                         <div class="program-section-title" style="font-size: 13px;">D. EVALUASI KETERLAKSANAAN LAYANAN</div>
                         <p style="font-size: 12px;">• <b>Evaluasi Proses:</b> Guru BK mengamati antusiasme, rasa saling menghormati, serta keterlibatan aktif siswa dalam diskusi.</p>
                         <p style="font-size: 12px;">• <b>Evaluasi Hasil:</b> Penilaian pemahaman baru (Understanding), perasaan positif (Comfort), dan rencana tindakan komitmen KBC (Action) siswa.</p>
                     </div>
 
-                    <!-- TANDA TANGAN -->
                     <div style="display: flex; justify-content: space-between; margin-top: 24px; text-align: center; font-size: 12px;">
                         <div>
                             <p>Mengetahui,</p>
@@ -647,7 +976,6 @@
             `;
         }
 
-        /* --- FUNGSI BANK MATERI BK KBC --- */
         function renderBankMateriKBC() {
             const filterPilar = document.getElementById('filter-materi-pilar').value;
             const container = document.getElementById('container-bank-materi');
@@ -675,7 +1003,7 @@
             `).join('');
         }
 
-        /* --- FUNGSI PROGRAM BK KOMPREHENSIF --- */
+        /* --- FUNGSI DASAR SISTEM --- */
         function generateProgramBK() {
             const targetKelas = document.getElementById('filter-prota-kelas').value;
             const muridList = getMuridData();
@@ -709,7 +1037,6 @@
                     <p style="font-size: 12px; color: #6b7280;">Sasaran Target: <b>${labelJudulTarget}</b> | Total Murid: <b>${targetMurid.length}</b> | Sampel DCM: <b>${totalResponSiswa} Respon</b></p>
                 </div>
 
-                <!-- 1. RASIONAL -->
                 <div class="program-section-box">
                     <div class="program-section-title">I. RASIONAL</div>
                     <p style="font-size: 13px; line-height: 1.6; text-align: justify;">
@@ -717,23 +1044,14 @@
                     </p>
                 </div>
 
-                <!-- 2. VISI DAN MISI -->
                 <div class="program-section-box">
                     <div class="program-section-title">II. VISI DAN MISI LAYANAN BK BERBASIS KBC</div>
                     <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">A. Visi Layanan BK:</p>
                     <p style="font-size: 13px; margin-bottom: 10px; font-style: italic; padding-left: 10px; border-left: 3px solid #047857;">
                         "Terwujudnya layanan Bimbingan dan Konseling yang profesional berbasis Kurikulum Berbasis Cinta (KBC) dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, cinta lingkungan, serta cinta tanah air."
                     </p>
-                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">B. Misi Layanan BK:</p>
-                    <ol style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li>Membangun kemandirian peserta didik melalui penanaman rasa Cinta Allah, Rasul-Nya, dan ilmu pengetahuan.</li>
-                        <li>Memfasilitasi pengentasan masalah peserta didik melalui konseling berbasis cinta kasih dan kelembutan empati.</li>
-                        <li>Menyelenggarakan layanan bimbingan klasikal dan kelompok berwawasan kelestarian lingkungan serta cinta tanah air.</li>
-                        <li>Menjalin kolaborasi sinergis dengan orang tua, guru, dan masyarakat madrasah.</li>
-                    </ol>
                 </div>
 
-                <!-- 3. DESKRIPSI KEBUTUHAN -->
                 <div class="program-section-box">
                     <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA)</div>
                     <table>
@@ -763,35 +1081,6 @@
                     </table>
                 </div>
 
-                <!-- 4. RENCANA OPERASIONAL -->
-                <div class="program-section-box">
-                    <div class="program-section-title">IV. RENCANA OPERASIONAL MATRIKS PROGRAM</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 30px;">No</th>
-                                <th>Bidang Layanan</th>
-                                <th>Topik Kebutuhan</th>
-                                <th>Materi Bimbingan (Integrasi KBC)</th>
-                                <th>Strategi Layanan</th>
-                                <th>Semester</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${programPrioritas.map((p, idx) => `
-                                <tr>
-                                    <td>${idx + 1}</td>
-                                    <td><span class="badge-bidang">${p.bidang}</span></td>
-                                    <td>${TOPIK_DCM[p.topik]}</td>
-                                    <td><b>${p.materi}</b></td>
-                                    <td>${p.strategi}</td>
-                                    <td><b>${p.sem}</b></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
                 <div style="display: flex; justify-content: space-between; margin-top: 30px; padding: 0 20px; text-align: center; font-size: 12px;">
                     <div>
                         <p>Mengetahui,</p>
@@ -811,7 +1100,6 @@
             `;
         }
 
-        /* --- FUNGSI UTILITAS DATA & EVENT --- */
         function simpanResponDCM() {
             const nama = document.getElementById('siswa-nama').value;
             const kelas = document.getElementById('siswa-kelas').value;
@@ -825,13 +1113,21 @@
 
             const dataBaru = { nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') };
 
-            db.ref('dcm_data_list').push(dataBaru, (error) => {
-                if (error) alert("Gagal mengirim data!");
-                else {
-                    alert("Jawaban DCM berhasil tersimpan dan tersinkronisasi!");
-                    soalList.forEach(s => { const el = document.getElementById(`soal-${s.id}`); if(el) el.checked = false; });
-                }
-            });
+            if(db) {
+                db.ref('dcm_data_list').push(dataBaru, (error) => {
+                    if (error) alert("Gagal mengirim data!");
+                    else {
+                        alert("Jawaban DCM berhasil tersimpan dan tersinkronisasi!");
+                        soalList.forEach(s => { const el = document.getElementById(`soal-${s.id}`); if(el) el.checked = false; });
+                    }
+                });
+            } else {
+                const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+                listData.push(dataBaru);
+                localStorage.setItem('dcm_data_list', JSON.stringify(listData));
+                alert("Jawaban DCM berhasil tersimpan secara lokal!");
+                soalList.forEach(s => { const el = document.getElementById(`soal-${s.id}`); if(el) el.checked = false; });
+            }
         }
 
         function switchSubProfil(sub) {
@@ -925,10 +1221,12 @@
         }
 
         function hapusJawabanDCM(keyFirebase) {
-            if (confirm("Hapus jawaban DCM ini secara permanen dari server Cloud?")) {
-                db.ref(`dcm_data_list/${keyFirebase}`).remove((err) => {
-                    if (!err) alert("Data terhapus dari server Cloud!");
-                });
+            if (confirm("Hapus jawaban DCM ini secara permanen?")) {
+                if(db) {
+                    db.ref(`dcm_data_list/${keyFirebase}`).remove((err) => {
+                        if (!err) alert("Data terhapus!");
+                    });
+                }
             }
         }
 
@@ -967,12 +1265,14 @@
                 isMasalah: document.getElementById(`edit-modal-soal-${idx}`).checked ? 1 : 0
             }));
 
-            db.ref(`dcm_data_list/${keyFirebase}/respon`).set(responBaru, (err) => {
-                if (!err) {
-                    alert("Perubahan jawaban berhasil diperbarui ke Cloud server!");
-                    tutupModalEditJawaban();
-                }
-            });
+            if(db) {
+                db.ref(`dcm_data_list/${keyFirebase}/respon`).set(responBaru, (err) => {
+                    if (!err) {
+                        alert("Perubahan jawaban diperbarui!");
+                        tutupModalEditJawaban();
+                    }
+                });
+            }
         }
 
         function getDCMSoal() { return JSON.parse(localStorage.getItem('master_soal_dcm')) || DEFAULT_SOAL; }
@@ -1040,7 +1340,7 @@
         }
 
         function hapusSemuaSoalAngket() {
-            if (confirm('⚠️ PERINGATAN KETAT!\nApakah Anda yakin ingin MENGHAPUS SELURUH BUTIR PERNYATAAN ANGKET DCM?')) {
+            if (confirm('⚠️ PERINGATAN!\nApakah Anda yakin ingin MENGHAPUS SELURUH BUTIR PERNYATAAN ANGKET DCM?')) {
                 localStorage.setItem('master_soal_dcm', JSON.stringify([]));
                 renderEditSoal();
                 alert('Seluruh butir pernyataan angket DCM berhasil dikosongkan!');
@@ -1088,10 +1388,90 @@
 
         function getMuridData() { return JSON.parse(localStorage.getItem('master_murid')) || []; }
 
+        function renderTabelMurid() {
+            const list = getMuridData();
+            const filterKelas = document.getElementById('filter-murid-kelas').value;
+
+            let filteredList = list;
+            if(filterKelas !== 'SEMUA') {
+                filteredList = list.filter(m => m.kelas === filterKelas);
+            }
+
+            const tbody = document.getElementById('tabel-murid-body');
+            tbody.innerHTML = filteredList.map((m, idx) => `
+                <tr>
+                    <td><b>${idx + 1}</b></td>
+                    <td>${m.nisn}</td>
+                    <td><b>${m.nama}</b></td>
+                    <td><span class="badge-bidang">${m.kelas}</span></td>
+                    <td>${m.jk}</td>
+                    <td style="text-align: right;">
+                        <button onclick="hapusMurid('${m.nisn}')" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+            updateDropdownNamaSiswaDCM();
+        }
+
+        function tambahMurid(e) {
+            e.preventDefault();
+            const nisn = document.getElementById('murid-nisn').value.trim();
+            const nama = document.getElementById('murid-nama').value.trim().toUpperCase();
+            const kelas = document.getElementById('murid-kelas').value;
+            const jk = document.getElementById('murid-jk').value;
+
+            const list = getMuridData();
+            if(list.some(m => m.nisn === nisn)) {
+                alert('NIS / NISN murid sudah terdaftar!');
+                return;
+            }
+
+            list.push({ nisn, nama, kelas, jk });
+            localStorage.setItem('master_murid', JSON.stringify(list));
+            
+            document.getElementById('murid-nisn').value = '';
+            document.getElementById('murid-nama').value = '';
+            renderTabelMurid();
+            alert(`Murid ${nama} berhasil ditambahkan!`);
+        }
+
+        function hapusMurid(nisn) {
+            let list = getMuridData();
+            if(confirm(`Hapus murid ini?`)) {
+                list = list.filter(m => m.nisn !== nisn);
+                localStorage.setItem('master_murid', JSON.stringify(list));
+                renderTabelMurid();
+            }
+        }
+
+        function hapusMuridPerKelas() {
+            const filterKelas = document.getElementById('filter-murid-kelas').value;
+            let list = getMuridData();
+
+            if (filterKelas === 'SEMUA') {
+                if (confirm('Hapus seluruh murid dari SEMUA kelas?')) {
+                    localStorage.setItem('master_murid', JSON.stringify([]));
+                    renderTabelMurid();
+                }
+            } else {
+                if (confirm(`Hapus murid kelas ${filterKelas}?`)) {
+                    list = list.filter(m => m.kelas !== filterKelas);
+                    localStorage.setItem('master_murid', JSON.stringify(list));
+                    renderTabelMurid();
+                }
+            }
+        }
+
         function updateDropdownNamaSiswaDCM() {
             const kelas = document.getElementById('siswa-kelas').value;
             const muridList = getMuridData().filter(m => m.kelas === kelas);
             document.getElementById('siswa-nama').innerHTML = `<option value="">-- Pilih Siswa --</option>` + muridList.map(m => `<option value="${m.nama}">${m.nama}</option>`).join('');
+        }
+
+        function autoFillJenisKelaminDCM() {
+            const nama = document.getElementById('siswa-nama').value;
+            const murid = getMuridData().find(m => m.nama === nama);
+            if(murid) document.getElementById('siswa-jk').value = murid.jk;
         }
 
         function loadProfil() {
@@ -1103,6 +1483,49 @@
                     <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">${counts[idx]} Masalah Dicentang</span>
                 </div>
             `).join('');
+        }
+
+        function tambahJurnal(e) {
+            e.preventDefault();
+            const nama = document.getElementById('jurnal-nama').value;
+            const jenis = document.getElementById('jurnal-jenis').value;
+            const masalah = document.getElementById('jurnal-masalah').value;
+
+            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+            list.unshift({ tgl: new Date().toLocaleDateString('id-ID'), nama, jenis, masalah });
+            localStorage.setItem('jurnal_bk', JSON.stringify(list));
+            renderJurnal();
+            document.getElementById('jurnal-masalah').value = '';
+            document.getElementById('jurnal-nama').value = '';
+        }
+
+        function renderJurnal() {
+            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+            document.getElementById('tabel-jurnal-body').innerHTML = list.map(i => `
+                <tr>
+                    <td>${i.tgl}</td>
+                    <td><b>${i.nama}</b></td>
+                    <td><span class="badge-bidang">${i.jenis}</span></td>
+                    <td>${i.masalah}</td>
+                </tr>
+            `).join('');
+        }
+
+        function tambahKelas(e) {
+            e.preventDefault();
+            const input = document.getElementById('input-kelas-baru');
+            const kelasBaru = input.value.trim().toUpperCase();
+            if(kelasBaru) {
+                const kelas = initKelas();
+                if(!kelas.includes(kelasBaru)) {
+                    kelas.push(kelasBaru);
+                    kelas.sort();
+                    localStorage.setItem('master_kelas', JSON.stringify(kelas));
+                    input.value = '';
+                    renderKelas();
+                    alert(`Kelas ${kelasBaru} berhasil ditambahkan!`);
+                } else alert('Kelas sudah ada!');
+            }
         }
 
         function exportToWord(type) {
