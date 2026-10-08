@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Layanan BK Modern - MTsN 7 Tasikmalaya</title>
+    <title>Layanan BK - MTsN 7 Tasikmalaya Melayanai, Mendampingi, Menginspirasi</title>
     <!-- Library SheetJS untuk Ekspor & Impor File Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
@@ -45,6 +45,7 @@
         footer { background: #1f2937; color: #9ca3af; text-align: center; padding: 15px; font-size: 12px; margin-top: auto; }
         .hidden { display: none !important; }
         .badge-bidang { background: #d1fae5; color: #065f46; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
+        .badge-kbc { background: #fef3c7; color: #92400e; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; display: inline-block; border: 1px solid #f59e0b; }
         .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .filter-box { display: flex; gap: 12px; align-items: center; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb; flex-wrap: wrap; justify-content: space-between; }
         .sub-tab-box { display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
@@ -53,7 +54,9 @@
         .program-section-box { border: 1px solid #047857; border-radius: 8px; padding: 16px; margin-bottom: 20px; background: #fdfdfd; }
         .program-section-title { font-size: 15px; font-weight: bold; color: #047857; margin-bottom: 8px; border-bottom: 2px solid #047857; padding-bottom: 4px; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .materi-card { border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; background: #ffffff; margin-bottom: 16px; transition: 0.2s; }
+        .materi-card:hover { border-color: #047857; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         @media print {
             header, footer, .tabs, .action-bar, .filter-box, .sub-tab-box, .role-badge, .btn-action-group { display: none !important; }
             body { background: white; color: black; }
@@ -69,7 +72,7 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, Program BK & RPL POP BK Berbasis Cinta</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, RPL POP BK & Materi KBC</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -84,7 +87,9 @@
             <button onclick="switchTab('dcm')" id="tab-dcm" class="tab-btn active">📝 Isi DCM Siswa</button>
             <button onclick="switchTab('murid')" id="tab-murid" class="tab-btn admin-only hidden">👨‍🎓 Data Murid 🔒</button>
             <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn admin-only hidden">📊 Hasil & Profil 🔒</button>
-            <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program & RPL BK 🔒</button>
+            <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program BK 🔒</button>
+            <button onclick="switchTab('rpl')" id="tab-rpl" class="tab-btn admin-only hidden">📋 RPL POP BK & KBC 🔒</button>
+            <button onclick="switchTab('materikbc')" id="tab-materikbc" class="tab-btn admin-only hidden">📚 Materi BK (KBC) 🔒</button>
             <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal BK 🔒</button>
             <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn admin-only hidden">✏️ Edit Angket 🔒</button>
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
@@ -173,32 +178,113 @@
             </div>
         </section>
 
-        <!-- TAB 4: PROGRAM BK & GENERATOR RPL POP BK BERBASIS CINTA -->
+        <!-- TAB 4: PROGRAM BK KOMPREHENSIF -->
         <section id="sec-program" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h2 style="font-size: 18px;">Dokumen Program BK Komprehensif & RPL (POP BK + Kurikulum Berbasis Cinta)</h2>
-                    <p style="font-size: 12px; color: #6b7280;">Program BK operasional dan Modul Rencana Pelaksanaan Layanan (RPL BK) sesuai aturan POP BK Kemendikbud & Nilai-Nilai Kurikulum Berbasis Cinta (KBC).</p>
+                    <h2 style="font-size: 18px;">Dokumen Program Bimbingan & Konseling Komprehensif</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Program BK operasional berbasis asesmen DCM dan terintegrasi Kurikulum Berbasis Cinta (KBC).</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
-                    <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Dokumen Program ke Word (.doc)</button>
-                    <button onclick="window.print()" class="btn-secondary">🖨️ Cetak / Print PDF</button>
+                    <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Word (.doc)</button>
+                    <button onclick="window.print()" class="btn-secondary">🖨️ Cetak PDF</button>
+                </div>
+            </div>
+            <div class="filter-box">
+                <label style="font-size: 13px; font-weight: bold; color: #047857;">🎯 Target Program BK:</label>
+                <select id="filter-prota-kelas" onchange="generateProgramBK()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; font-weight: bold;">
+                    <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
+                </select>
+            </div>
+            <div id="container-program"></div>
+        </section>
+
+        <!-- TAB 5: RENCANA PELAKSANAAN LAYANAN (RPL BK POP BK & KBC) -->
+        <section id="sec-rpl" class="card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px;">Rencana Pelaksanaan Layanan (RPL BK) POP BK & KBC</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Generator RPL Sesuai Standar POP BK Kemendikbud/Kemenag & Kurikulum Berbasis Cinta.</p>
+                </div>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="exportToWord('rpl')" class="btn-word">📄 Ekspor RPL ke Word (.doc)</button>
+                    <button onclick="window.print()" class="btn-secondary">🖨️ Cetak RPL PDF</button>
                 </div>
             </div>
 
-            <div class="filter-box">
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <label style="font-size: 13px; font-weight: bold; color: #047857;">🎯 Target Program BK:</label>
-                    <select id="filter-prota-kelas" onchange="generateProgramBK()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; font-weight: bold;">
-                        <option value="SEMUA">Semua Kelas (Paralel Angkatan)</option>
+            <form onsubmit="generateRPL(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div class="form-grid" style="background: none; padding: 0;">
+                    <div class="form-group">
+                        <label>Jenis Layanan BK</label>
+                        <select id="rpl-jenis-layanan">
+                            <option value="Bimbingan Klasikal">Bimbingan Klasikal</option>
+                            <option value="Bimbingan Kelompok">Bimbingan Kelompok</option>
+                            <option value="Konseling Individual">Konseling Individual</option>
+                            <option value="Konsultasi / Home Visit">Konsultasi / Home Visit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilar Kurikulum Berbasis Cinta (KBC)</label>
+                        <select id="rpl-pilar-kbc" onchange="updateMateriAutoRPL()">
+                            <option value="Cinta Allah dan Rasul-Nya">1. Cinta Allah dan Rasul-Nya</option>
+                            <option value="Cinta Ilmu">2. Cinta Ilmu</option>
+                            <option value="Cinta Diri dan Sesama">3. Cinta Diri dan Sesama</option>
+                            <option value="Cinta Lingkungan">4. Cinta Lingkungan</option>
+                            <option value="Cinta Tanah Air">5. Cinta Tanah Air</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bidang Layanan</label>
+                        <select id="rpl-bidang">
+                            <option value="Bimbingan Pribadi">Bimbingan Pribadi</option>
+                            <option value="Bimbingan Sosial">Bimbingan Sosial</option>
+                            <option value="Bimbingan Belajar">Bimbingan Belajar</option>
+                            <option value="Bimbingan Karir">Bimbingan Karir</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Kelas</label>
+                        <select id="rpl-kelas"></select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Topik / Judul RPL Layanan</label>
+                        <input type="text" id="rpl-topik" placeholder="Contoh: Meneladani Akhlak Rasulullah dalam Menjaga Keharmonisan Diri" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Alokasi Waktu</label>
+                        <input type="text" id="rpl-waktu" value="2 x 40 Menit (1 Pertemuan)" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">⚡ Buat Rancangan RPL BK POP BK</button>
+            </form>
+
+            <div id="container-rpl-output"></div>
+        </section>
+
+        <!-- TAB 6: BANK MATERI BK BERBASIS KBC -->
+        <section id="sec-materikbc" class="card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px;">Bank Materi Layanan BK Berbasis Kurikulum Berbasis Cinta (KBC)</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Referensi modul materi bimbingan terstruktur berdasarkan 5 Pilar KBC untuk Madrasah/Sekolah.</p>
+                </div>
+                <div class="filter-box" style="margin-bottom: 0; padding: 6px 12px;">
+                    <label style="font-size: 12px; font-weight: bold;">Filter Pilar KBC:</label>
+                    <select id="filter-materi-pilar" onchange="renderBankMateriKBC()" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #d1d5db; font-size: 12px;">
+                        <option value="SEMUA">Semua Pilar KBC</option>
+                        <option value="Cinta Allah dan Rasul-Nya">1. Cinta Allah dan Rasul-Nya</option>
+                        <option value="Cinta Ilmu">2. Cinta Ilmu</option>
+                        <option value="Cinta Diri dan Sesama">3. Cinta Diri dan Sesama</option>
+                        <option value="Cinta Lingkungan">4. Cinta Lingkungan</option>
+                        <option value="Cinta Tanah Air">5. Cinta Tanah Air</option>
                     </select>
                 </div>
             </div>
 
-            <div id="container-program"></div>
+            <div id="container-bank-materi"></div>
         </section>
 
-        <!-- TAB 5: JURNAL -->
+        <!-- TAB 7: JURNAL -->
         <section id="sec-jurnal" class="card hidden">
             <h2 style="font-size: 18px; margin-bottom: 12px;">Jurnal Bimbingan BK</h2>
             <form onsubmit="tambahJurnal(event)" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
@@ -212,7 +298,7 @@
             <table><thead><tr><th>Tanggal</th><th>Siswa</th><th>Layanan</th><th>Permasalahan</th></tr></thead><tbody id="tabel-jurnal-body"></tbody></table>
         </section>
 
-        <!-- TAB 6: EDIT ANGKET -->
+        <!-- TAB 8: EDIT ANGKET -->
         <section id="sec-editsoal" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -241,7 +327,7 @@
             <table><thead><tr><th>No</th><th>Bidang Topik</th><th>Butir Pernyataan</th><th style="text-align: right;">Aksi</th></tr></thead><tbody id="tabel-soal-body"></tbody></table>
         </section>
 
-        <!-- TAB 7: PENGATURAN KELAS -->
+        <!-- TAB 9: PENGATURAN KELAS -->
         <section id="sec-pengaturan" class="card hidden">
             <h2 style="font-size: 18px; margin-bottom: 12px;">Pengaturan Kelas</h2>
             <form onsubmit="tambahKelas(event)" style="display: flex; gap: 10px;">
@@ -251,21 +337,6 @@
             <table><thead><tr><th>Daftar Kelas</th><th style="text-align: right;">Aksi</th></tr></thead><tbody id="tabel-kelas-body"></tbody></table>
         </section>
     </main>
-
-    <!-- MODAL POPUP PRATINJAU & CETAK RPL BK (POP BK + KURIKULUM BERBASIS CINTA) -->
-    <div id="modal-rpl-bk" class="modal hidden">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #047857; padding-bottom: 8px; margin-bottom: 16px;">
-                <h3 style="font-size: 16px; color: #047857; font-weight: bold;">📑 Rencana Pelaksanaan Layanan BK (POP BK & Kurikulum Berbasis Cinta)</h3>
-                <button onclick="tutupModalRPL()" class="btn-danger" style="padding: 4px 10px;">✕ Tutup</button>
-            </div>
-            <div id="container-modal-rpl-body"></div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 12px;">
-                <button onclick="cetakRPLWord()" class="btn-word">📄 Ekspor RPL ke Word (.doc)</button>
-                <button onclick="window.print()" class="btn-secondary">🖨️ Cetak RPL PDF</button>
-            </div>
-        </div>
-    </div>
 
     <!-- MODAL EDIT JAWABAN SISWA -->
     <div id="modal-edit-jawaban" class="modal hidden">
@@ -328,19 +399,63 @@
             { id: 12, topik: 11, text: "Bingung memilih sekolah lanjutan setelah lulus MTs." }
         ];
 
+        // MASTER REFERENSI MATERI BK BERBASIS KURIKULUM BERBASIS CINTA (KBC)
+        const BANK_MATERI_KBC = [
+            {
+                pilar: "Cinta Allah dan Rasul-Nya",
+                bidang: "Bimbingan Pribadi / Agama",
+                judul: "Meneladani Akhlak Rasulullah SAW dalam Kehidupan Remaja Modern",
+                tujuan: "Siswa mampu memahami, mencintai, dan menerapkan sunnah serta kelembutan akhlak Rasulullah SAW dalam berinteraksi sehari-hari.",
+                uraian: "Materi ini membahas pentingnya menjadikan kecintaan kepada Allah SWT dan Rasul-Nya sebagai fondasi emosi dan moral. Pembahasan meliputi kedisiplinan ibadah, kejujuran (Ash-Shiddiq), dapat dipercaya (Al-Amanah), serta meneladani kelembutan dan kasih sayang Nabi terhadap sesama makhluk.",
+                referensi: "Pedoman KBC Kemenag & Buku Karakter Islami Remaja Madrasah"
+            },
+            {
+                pilar: "Cinta Ilmu",
+                bidang: "Bimbingan Belajar",
+                judul: "Adab Menuntut Ilmu & Manajemen Waktu Belajar Efektif",
+                tujuan: "Siswa memiliki semangat belajar yang tinggi sebagai wujud ibadah serta mampu mengelola waktu belajar dengan penuh kesadaran.",
+                uraian: "Membahas konsep bahwa menuntut ilmu adalah wujud rasa syukur atas akal yang diberikan Allah. Materi meliputi etika terhadap guru, strategi mengatasi rasa malas, teknik fokus belajar tanpa adiksi gadget, serta penyusunan jadwal harian seimbang antara belajar dan istirahat.",
+                referensi: "Kitab Ta'lim Muta'allim & POP BK Kurikulum Merdeka"
+            },
+            {
+                pilar: "Cinta Diri dan Sesama",
+                bidang: "Bimbingan Pribadi & Sosial",
+                judul: "Self-Love, Pencegahan Bullying, dan Etika Pergaulan Sebaya",
+                tujuan: "Siswa mampu menghargai kelebihan dan kekurangan diri serta membangun rasa empati dan kasih sayang tanpa tindakan perundungan (bullying).",
+                uraian: "Mengedukasi siswa untuk menjaga kesehatan mental dan fisik sebagai bentuk cinta diri. Mengembangkan rasa empati, saling menghormati perbedaan, menghentikan candaan fisik/verbal yang menyakiti, serta membangun komunikasi asertif yang ramah dan saling mendukung.",
+                referensi: "Modul Sekolah Ramah Anak & Panduan POP BK"
+            },
+            {
+                pilar: "Cinta Lingkungan",
+                bidang: "Bimbingan Pribadi & Sosial",
+                judul: "Green Counseling: Menjaga Kelestarian Lingkungan Madrasah dan Alam",
+                tujuan: "Siswa memiliki kesadaran ekologis dan kepedulian terhadap kebersihan lingkungan sekitar sebagai bagian dari iman.",
+                uraian: "Menanamkan nilai 'An-Nazhafatu Minal Iman' (Kebersihan sebagian dari iman). Membiasakan siswa mengurangi sampah plastik, memilah sampah organik/anorganik, menjaga fasilitas madrasah, dan menanam budaya hemat energi serta air bersih.",
+                referensi: "Modul Eco-Madrasah & Green Guidance BK"
+            },
+            {
+                pilar: "Cinta Tanah Air",
+                bidang: "Bimbingan Sosial & Karir",
+                judul: "Semangat Nasionalisme, Moderasi Beragama, dan Kontribusi untuk Bangsa",
+                tujuan: "Siswa memiliki jiwa patriotisme yang tinggi, menghargai keberagaman suku/agama, dan bercita-cita membangun Indonesia.",
+                uraian: "Materi menekankan integrasi nilai keagamaan dan kebangsaan (Hubbul Wathan Minal Iman). Mengajarkan sikap toleransi, moderasi beragama, kepatuhan pada aturan hukum negara, serta memotivasi siswa meraih prestasi tinggi demi membanggakan bangsa.",
+                referensi: "Panduan Moderasi Beragama Kemenag RI & Kurikulum Berbasis Cinta"
+            }
+        ];
+
         const REKOMENDASI_PROGRAM = [
-            { topik: 0, bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat Remaja", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Juli / Agustus", nilaiCinta: "Cinta Diri Sendiri (Menjaga Tubuh sebagai Amanah Allah)" },
-            { topik: 1, bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Uang Saku", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "September", nilaiCinta: "Cinta Diri & Orang Tua (Menghargai Jerih Payah Orang Tua)" },
-            { topik: 2, bidang: "Bimbingan Pribadi", materi: "Membangun Komunikasi Efektif & Keharmonisan dengan Keluarga", strategi: "Konseling Individual / Home Visit", sem: "Semester 1", bulan: "Oktober", nilaiCinta: "Cinta Orang Tua & Keluarga (Birrul Walidain)" },
-            { topik: 3, bidang: "Bimbingan Agama/Moral", materi: "Pembentukan Karakter Islami & Kedisiplinan Ibadah", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "November", nilaiCinta: "Cinta Allah & Rasul (Ketaatan & Istiqomah Ibadah)" },
-            { topik: 4, bidang: "Bimbingan Pribadi", materi: "Pemanfaatan Waktu Luang & Pengembangan Bakat/Hobi Positif", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "Desember", nilaiCinta: "Cinta Diri Sendiri (Mengembangkan Potensi Diri)" },
-            { topik: 5, bidang: "Bimbingan Pribadi", materi: "Meningkatkan Rasa Percaya Diri & Manajemen Kecemasan", strategi: "Bimbingan Kelompok", sem: "Semester 2", bulan: "Januari", nilaiCinta: "Cinta Diri Sendiri (Syukur atas Keunikan Diri)" },
-            { topik: 6, bidang: "Bimbingan Sosial", materi: "Etika Bergaul & Keterampilan Interaksi Sosial Teman Sebaya", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Februari", nilaiCinta: "Cinta Sesama (Menebar Kasih Sayang & Anti-Bullying)" },
-            { topik: 7, bidang: "Bimbingan Pribadi", materi: "Memahami Pubertas & Kesehatan Reproduksi Remaja Madrasah", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Maret", nilaiCinta: "Cinta Diri & Kehormatan Diri (Menjaga Pergaulan Suci)" },
-            { topik: 8, bidang: "Bimbingan Sosial", materi: "Adaptasi Lingkungan Sekolah & Kedisiplinan Tata Tertib", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "April", nilaiCinta: "Cinta Lingkungan Madrasah (Toleransi & Kedisiplinan)" },
-            { topik: 9, bidang: "Bimbingan Belajar", materi: "Strategi Memahami Mata Pelajaran Sukar & Diskusi Kelompok", strategi: "Bimbingan Kelompok", sem: "Semester 2", bulan: "Mei", nilaiCinta: "Cinta Ilmu Pengetahuan (Pantang Menyerah Belajar)" },
-            { topik: 10, bidang: "Bimbingan Belajar", materi: "Teknik Belajar Efektif & Manajemen Waktu Mengerjakan Tugas", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Agustus", nilaiCinta: "Cinta Diri & Waktu (Kedisiplinan & Tanggung Jawab)" },
-            { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Januari / Februari", nilaiCinta: "Cinta Masa Depan & Cita-Cita (Iktiar & Tawakal)" }
+            { topik: 0, bidang: "Bimbingan Pribadi", materi: "Menjaga Kesehatan Fisik & Pola Hidup Sehat Remaja", strategi: "Bimbingan Klasikal / Edukasi Kesehatan", sem: "Semester 1", bulan: "Juli / Agustus" },
+            { topik: 1, bidang: "Bimbingan Pribadi", materi: "Manajemen Keuangan Sederhana & Skala Prioritas Saku Siswa", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "September" },
+            { topik: 2, bidang: "Bimbingan Pribadi", materi: "Membangun Komunikasi Efektif & Keharmonisan dengan Keluarga", strategi: "Konseling Individual / Home Visit", sem: "Semester 1", bulan: "Oktober" },
+            { topik: 3, bidang: "Bimbingan Agama/Moral", materi: "Pembentukan Karakter Islami & Kedisiplinan Ibadah", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "November" },
+            { topik: 4, bidang: "Bimbingan Pribadi", materi: "Pemanfaatan Waktu Luang & Pengembangan Bakat/Hobi", strategi: "Bimbingan Kelompok", sem: "Semester 1", bulan: "Desember" },
+            { topik: 5, bidang: "Bimbingan Pribadi", materi: "Meningkatkan Rasa Percaya Diri & Manajemen Kecemasan", strategi: "Konseling Individual / Bimbingan Kelompok", sem: "Semester 2", bulan: "Januari" },
+            { topik: 6, bidang: "Bimbingan Sosial", materi: "Etika Bergaul & Keterampilan Interaksi Sosial Teman Sebaya", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Februari" },
+            { topik: 7, bidang: "Bimbingan Pribadi", materi: "Memahami Pubertas & Kesehatan Reproduksi Remaja Madrasah", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "Maret" },
+            { topik: 8, bidang: "Bimbingan Sosial", materi: "Adaptasi Lingkungan Sekolah & Kedisiplinan Tata Tertib", strategi: "Bimbingan Klasikal", sem: "Semester 2", bulan: "April" },
+            { topik: 9, bidang: "Bimbingan Belajar", materi: "Strategi Memahami Mata Pelajaran Sukar & Diskusi Kelompok", strategi: "Bimbingan Kelompok", sem: "Semester 2", bulan: "Mei" },
+            { topik: 10, bidang: "Bimbingan Belajar", materi: "Teknik Belajar Efektif & Manajemen Waktu Mengerjakan Tugas", strategi: "Bimbingan Klasikal", sem: "Semester 1", bulan: "Agustus" },
+            { topik: 11, bidang: "Bimbingan Karir", materi: "Eksplorasi Karir & Pilihan Sekolah Lanjutan setelah MTs", strategi: "Bimbingan Karir Klasikal", sem: "Semester 2", bulan: "Januari / Februari" }
         ];
 
         // REALTIME LISTENER FIREBASE
@@ -382,7 +497,7 @@
 
         function switchTab(tab) {
             if (!isAdminLoggedIn && tab !== 'dcm') return alert("Fitur khusus Admin BK!");
-            ['dcm', 'murid', 'profil', 'program', 'jurnal', 'editsoal', 'pengaturan'].forEach(t => {
+            ['dcm', 'murid', 'profil', 'program', 'rpl', 'materikbc', 'jurnal', 'editsoal', 'pengaturan'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
                 document.getElementById(`tab-${t}`).classList.remove('active');
             });
@@ -393,10 +508,174 @@
             if(tab === 'murid') renderTabelMurid();
             if(tab === 'profil') { loadProfil(); initProfilIndividu(); }
             if(tab === 'program') generateProgramBK();
+            if(tab === 'rpl') initRPLForm();
+            if(tab === 'materikbc') renderBankMateriKBC();
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FUNGSI GENERATE PROGRAM BK KOMPREHENSIF LENGKAP --- */
+        /* --- FUNGSI RPL POP BK & KBC GENERATOR --- */
+        function initRPLForm() {
+            const kelasList = initKelas();
+            document.getElementById('rpl-kelas').innerHTML = kelasList.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+            updateMateriAutoRPL();
+        }
+
+        function updateMateriAutoRPL() {
+            const pilar = document.getElementById('rpl-pilar-kbc').value;
+            const refMateri = BANK_MATERI_KBC.find(m => m.pilar === pilar);
+            if (refMateri) {
+                document.getElementById('rpl-topik').value = refMateri.judul;
+            }
+        }
+
+        function generateRPL(e) {
+            e.preventDefault();
+            const jenisLayanan = document.getElementById('rpl-jenis-layanan').value;
+            const pilarKBC = document.getElementById('rpl-pilar-kbc').value;
+            const bidang = document.getElementById('rpl-bidang').value;
+            const kelas = document.getElementById('rpl-kelas').value;
+            const topik = document.getElementById('rpl-topik').value;
+            const waktu = document.getElementById('rpl-waktu').value;
+
+            const refMateri = BANK_MATERI_KBC.find(m => m.pilar === pilarKBC) || {
+                tujuan: "Siswa mampu memahami dan mengimplementasikan nilai karakter berbasis cinta dalam kehidupan sehari-hari.",
+                uraian: "Pembahasan nilai-nilai karakter berlandaskan Kurikulum Berbasis Cinta (KBC) dan panduan POP BK.",
+                referensi: "Pedoman Kurikulum Berbasis Cinta & POP BK Kemenag RI"
+            };
+
+            const container = document.getElementById('container-rpl-output');
+            container.innerHTML = `
+                <div style="border: 2px solid #047857; padding: 24px; border-radius: 8px; background: #ffffff; margin-top: 10px;">
+                    <div style="text-align: center; border-bottom: 2px solid #047857; padding-bottom: 12px; margin-bottom: 16px;">
+                        <h2 style="font-size: 16px; color: #047857; font-weight: bold;">RENCANA PELAKSANAAN LAYANAN (RPL) BIMBINGAN DAN KONSELING</h2>
+                        <h3 style="font-size: 13px; color: #374151;">STANDAR POP BK & KURIKULUM BERBASIS CINTA (KBC)</h3>
+                        <p style="font-size: 11px; color: #6b7280;">MTsN 7 Tasikmalaya - Tahun Ajaran 2026/2027</p>
+                    </div>
+
+                    <!-- IDENTITAS RPL -->
+                    <table style="width: 100%; margin-bottom: 16px; border: 1px solid #d1d5db;">
+                        <tr><td style="width: 180px; background: #ecfdf5;"><b>Jenis Layanan</b></td><td>${jenisLayanan}</td><td style="width: 180px; background: #ecfdf5;"><b>Sasaran Kelas</b></td><td>Kelas ${kelas}</td></tr>
+                        <tr><td style="background: #ecfdf5;"><b>Bidang Layanan</b></td><td><span class="badge-bidang">${bidang}</span></td><td style="background: #ecfdf5;"><b>Alokasi Waktu</b></td><td>${waktu}</td></tr>
+                        <tr><td style="background: #ecfdf5;"><b>Pilar KBC</b></td><td colspan="3"><span class="badge-kbc">❤️ ${pilarKBC}</span></td></tr>
+                        <tr><td style="background: #ecfdf5;"><b>Topik / Tema Layanan</b></td><td colspan="3"><b>${topik}</b></td></tr>
+                    </table>
+
+                    <!-- A. TUJUAN LAYANAN -->
+                    <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
+                        <div class="program-section-title" style="font-size: 13px;">A. TUJUAN LAYANAN</div>
+                        <p style="font-size: 12px; line-height: 1.5;"><b>1. Tujuan Umum:</b> ${refMateri.tujuan}</p>
+                        <p style="font-size: 12px; line-height: 1.5; margin-top: 4px;"><b>2. Tujuan Khusus:</b></p>
+                        <ul style="font-size: 12px; padding-left: 20px; line-height: 1.5;">
+                            <li>Peserta didik mampu menganalisis pentingnya penerapan nilai <b>${pilarKBC}</b>.</li>
+                            <li>Peserta didik mampu menginternalisasi nilai rasa cinta dan empati dalam tindakan nyata.</li>
+                            <li>Peserta didik mampu berkomitmen menerapkan nilai-nilai KBC dalam kehidupan di madrasah dan masyarakat.</li>
+                        </ul>
+                    </div>
+
+                    <!-- B. METODE, MEDIA, DAN ALAT -->
+                    <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
+                        <div class="program-section-title" style="font-size: 13px;">B. METODE, MEDIA, DAN ALAT LAYANAN</div>
+                        <p style="font-size: 12px;">• <b>Metode / Teknik:</b> Experiential Learning, Diskusi Kelompok, Refleksi Diri (Love-Based Reflection), Curah Pendapat.</p>
+                        <p style="font-size: 12px;">• <b>Media / Alat:</b> Slide Presentasi KBC, Lembar Kerja Peserta Didik (LKPD), Video Inspiratif, Papan Refleksi.</p>
+                        <p style="font-size: 12px;">• <b>Sumber Material:</b> ${refMateri.referensi}.</p>
+                    </div>
+
+                    <!-- C. LANGKAH-LANGKAH KEGIATAN LAYANAN -->
+                    <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
+                        <div class="program-section-title" style="font-size: 13px;">C. LANGKAH-LANGKAH KEGIATAN LAYANAN</div>
+                        <table style="width: 100%; margin-top: 6px;">
+                            <thead>
+                                <tr><th style="width: 120px;">Tahapan</th><th>Uraian Kegiatan Layanan BK (Berbasis KBC)</th><th style="width: 90px;">Waktu</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><b>1. Tahap Awal / Pendahuluan</b></td>
+                                    <td>
+                                        • Guru BK membuka layanan dengan salam hangat, doa bersama, dan pembacaan ayat Al-Qur'an (Integrasi Pilar Cinta Allah).<br>
+                                        • Guru BK melakukan pembinaan suasana kelas yang ramah, melakukan *ice breaking* berbasis kasih sayang.<br>
+                                        • Menjelaskan tujuan layanan dan mengaitkannya dengan pentingnya nilai <b>${pilarKBC}</b>.
+                                    </td>
+                                    <td>10 Menit</td>
+                                </tr>
+                                <tr>
+                                    <td><b>2. Tahap Inti (Kegiatan Utama)</b></td>
+                                    <td>
+                                        • Guru BK menayangkan ilustrasi/video materi: <i>"${topik}"</i>.<br>
+                                        • Peserta didik berdiskusi dalam kelompok kecil untuk membahas lembar refleksi KBC.<br>
+                                        • Masing-masing kelompok mempresentasikan komitmen perilaku berbasis cinta dan saling menghargai pendapat.<br>
+                                        • Uraian Ringkas Materi: ${refMateri.uraian}
+                                    </td>
+                                    <td>60 Menit</td>
+                                </tr>
+                                <tr>
+                                    <td><b>3. Tahap Penutup & Refleksi</b></td>
+                                    <td>
+                                        • Peserta didik menyimpulkan nilai utama yang diperoleh dari kegiatan bimbingan.<br>
+                                        • Guru BK memberikan penguatan (reinforcement) nilai <b>${pilarKBC}</b> dan doa penutup.
+                                    </td>
+                                    <td>10 Menit</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- D. EVALUASI LAYANAN -->
+                    <div class="program-section-box" style="padding: 12px; margin-bottom: 12px;">
+                        <div class="program-section-title" style="font-size: 13px;">D. EVALUASI KETERLAKSANAAN LAYANAN</div>
+                        <p style="font-size: 12px;">• <b>Evaluasi Proses:</b> Guru BK mengamati antusiasme, rasa saling menghormati, serta keterlibatan aktif siswa dalam diskusi.</p>
+                        <p style="font-size: 12px;">• <b>Evaluasi Hasil:</b> Penilaian pemahaman baru (Understanding), perasaan positif (Comfort), dan rencana tindakan komitmen KBC (Action) siswa.</p>
+                    </div>
+
+                    <!-- TANDA TANGAN -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px; text-align: center; font-size: 12px;">
+                        <div>
+                            <p>Mengetahui,</p>
+                            <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
+                            <br><br><br>
+                            <p><b>___________________________</b></p>
+                            <p>NIP. -</p>
+                        </div>
+                        <div>
+                            <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
+                            <p><b>Guru Bimbingan Konseling</b></p>
+                            <br><br><br>
+                            <p><b>___________________________</b></p>
+                            <p>NIP. -</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* --- FUNGSI BANK MATERI BK KBC --- */
+        function renderBankMateriKBC() {
+            const filterPilar = document.getElementById('filter-materi-pilar').value;
+            const container = document.getElementById('container-bank-materi');
+
+            let filteredList = BANK_MATERI_KBC;
+            if (filterPilar !== 'SEMUA') {
+                filteredList = BANK_MATERI_KBC.filter(m => m.pilar === filterPilar);
+            }
+
+            container.innerHTML = filteredList.map(m => `
+                <div class="materi-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="badge-kbc">❤️ ${m.pilar}</span>
+                        <span class="badge-bidang">${m.bidang}</span>
+                    </div>
+                    <h3 style="font-size: 15px; font-weight: bold; color: #047857; margin-bottom: 6px;">${m.judul}</h3>
+                    <p style="font-size: 12px; color: #374151; margin-bottom: 8px;"><b>🎯 Tujuan Bimbingan:</b> ${m.tujuan}</p>
+                    <p style="font-size: 12px; color: #4b5563; line-height: 1.5; margin-bottom: 10px; background: #f9fafb; padding: 10px; border-radius: 6px; border-left: 3px solid #047857;">
+                        <b>📖 Uraian Ringkas Materi:</b><br>${m.uraian}
+                    </p>
+                    <div style="font-size: 11px; color: #6b7280; font-style: italic;">
+                        📚 Referensi: ${m.referensi}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /* --- FUNGSI PROGRAM BK KOMPREHENSIF --- */
         function generateProgramBK() {
             const targetKelas = document.getElementById('filter-prota-kelas').value;
             const muridList = getMuridData();
@@ -432,32 +711,31 @@
 
                 <!-- 1. RASIONAL -->
                 <div class="program-section-box">
-                    <div class="program-section-title">I. RASIONAL (BERBASIS KURIKULUM BERBASIS CINTA)</div>
+                    <div class="program-section-title">I. RASIONAL</div>
                     <p style="font-size: 13px; line-height: 1.6; text-align: justify;">
-                        Perkembangan peserta didik di MTsN 7 Tasikmalaya memerlukan pendampingan bimbingan dan konseling yang berorientasi pada kasih sayang dan kemandirian. Program BK diselenggarakan secara komprehensif berlandaskan asesmen kebutuhan Daftar Cek Masalah (DCM) serta dijiwai oleh **Kurikulum Berbasis Cinta (KBC)** yang mengintegrasikan nilai Cinta Allah & Rasul, Cinta Diri Sendiri, Cinta Sesama, dan Cinta Lingkungan.
+                        Perkembangan peserta didik/konseli di MTsN 7 Tasikmalaya mengalami berbagai perubahan fisik, emosional, dan sosial yang sangat dinamis. Layanan Bimbingan dan Konseling (BK) diselenggarakan secara terencana dan terstruktur untuk memfasilitasi kemandirian peserta didik dalam aspek pribadi, sosial, belajar, dan karir. Program bimbingan ini disusun berlandaskan analisis kebutuhan nyata (Need Assessment) melalui instrumen Daftar Cek Masalah (DCM) serta diintegrasikan dengan Kurikulum Berbasis Cinta (KBC).
                     </p>
                 </div>
 
                 <!-- 2. VISI DAN MISI -->
                 <div class="program-section-box">
-                    <div class="program-section-title">II. VISI DAN MISI LAYANAN BK</div>
+                    <div class="program-section-title">II. VISI DAN MISI LAYANAN BK BERBASIS KBC</div>
                     <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">A. Visi Layanan BK:</p>
                     <p style="font-size: 13px; margin-bottom: 10px; font-style: italic; padding-left: 10px; border-left: 3px solid #047857;">
-                        "Terwujudnya layanan Bimbingan dan Konseling yang profesional dan penuh kasih sayang dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, serta tangguh menggapai cita-cita."
+                        "Terwujudnya layanan Bimbingan dan Konseling yang profesional berbasis Kurikulum Berbasis Cinta (KBC) dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, cinta lingkungan, serta cinta tanah air."
                     </p>
                     <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">B. Misi Layanan BK:</p>
                     <ol style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li>Membangun kemandirian peserta didik melalui pemahaman potensi diri dan peningkatan rasa syukur.</li>
-                        <li>Memfasilitasi pengentasan masalah peserta didik melalui konseling individual dan kelompok berbasis empati.</li>
-                        <li>Menyelenggarakan bimbingan klasikal yang menyenangkan dan menanamkan nilai-nilai Kurikulum Berbasis Cinta.</li>
-                        <li>Menjalin sinergi harmonis antara sekolah, orang tua, dan masyarakat.</li>
+                        <li>Membangun kemandirian peserta didik melalui penanaman rasa Cinta Allah, Rasul-Nya, dan ilmu pengetahuan.</li>
+                        <li>Memfasilitasi pengentasan masalah peserta didik melalui konseling berbasis cinta kasih dan kelembutan empati.</li>
+                        <li>Menyelenggarakan layanan bimbingan klasikal dan kelompok berwawasan kelestarian lingkungan serta cinta tanah air.</li>
+                        <li>Menjalin kolaborasi sinergis dengan orang tua, guru, dan masyarakat madrasah.</li>
                     </ol>
                 </div>
 
                 <!-- 3. DESKRIPSI KEBUTUHAN -->
                 <div class="program-section-box">
-                    <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA DCM)</div>
-                    <p style="font-size: 13px; margin-bottom: 10px;">Berdasarkan rekapitulasi data isian DCM pada sasaran <b>${labelJudulTarget}</b>, diperoleh urutan kebutuhan masalah peserta didik sebagai berikut:</p>
+                    <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA)</div>
                     <table>
                         <thead>
                             <tr>
@@ -465,7 +743,7 @@
                                 <th>Bidang Topik DCM</th>
                                 <th>Jumlah Keluhan Siswa</th>
                                 <th>Persentase Masalah</th>
-                                <th>Integrasi Nilai KBC</th>
+                                <th>Kategori Prioritas</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -477,7 +755,7 @@
                                         <td><b>${TOPIK_DCM[p.topik]}</b></td>
                                         <td>${p.jumlah} Dicentang</td>
                                         <td>${persentase}%</td>
-                                        <td><span class="badge-bidang">${p.nilaiCinta}</span></td>
+                                        <td><span class="badge-bidang" style="background: ${idx < 3 ? '#fef2f2' : '#ecfdf5'}; color: ${idx < 3 ? '#991b1b' : '#065f46'};">${idx < 3 ? 'Prioritas Tinggi' : 'Prioritas Sedang'}</span></td>
                                     </tr>
                                 `;
                             }).join('')}
@@ -485,44 +763,18 @@
                     </table>
                 </div>
 
-                <!-- 4. TUJUAN LAYANAN -->
+                <!-- 4. RENCANA OPERASIONAL -->
                 <div class="program-section-box">
-                    <div class="program-section-title">IV. TUJUAN LAYANAN</div>
-                    <p style="font-size: 13px; font-weight: bold;">1. Tujuan Umum:</p>
-                    <p style="font-size: 13px; margin-bottom: 8px; padding-left: 10px;">Membantu peserta didik mencapai kemandirian dan tugas perkembangan secara optimal dalam suasana penuh kasih sayang.</p>
-                    <p style="font-size: 13px; font-weight: bold;">2. Tujuan Khusus (Berbasis KBC):</p>
-                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li>Peserta didik mampu menjaga kesehatan fisik dan mental sebagai bentuk Cinta Diri Sendiri.</li>
-                        <li>Peserta didik memiliki sikap empati, toleransi, dan kasih sayang sesama teman sebagai bentuk Cinta Sesama.</li>
-                        <li>Peserta didik semangat menuntut ilmu dan disiplin ibadah sebagai wujud Cinta Allah & Rasul.</li>
-                    </ul>
-                </div>
-
-                <!-- 5. KOMPONEN PROGRAM & BIDANG LAYANAN -->
-                <div class="program-section-box">
-                    <div class="program-section-title">V. KOMPONEN PROGRAM & BIDANG LAYANAN</div>
-                    <p style="font-size: 13px; margin-bottom: 8px;">Pelaksanaan layanan BK terbagi dalam 4 komponen sesuai Standar POP BK:</p>
-                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li><b>Layanan Dasar (45%):</b> Bimbingan Klasikal dan Bimbingan Kelompok.</li>
-                        <li><b>Layanan Responsif (25%):</b> Konseling Individual, Konseling Kelompok, dan Home Visit.</li>
-                        <li><b>Perencanaan Individual (20%):</b> Peminatan Karir & Pendampingan Cita-Cita.</li>
-                        <li><b>Dukungan Sistem (10%):</b> Administrasi BK & Pengembangan Profesi Guru BK.</li>
-                    </ul>
-                </div>
-
-                <!-- 6. MATRIKS RENCANA OPERASIONAL (ACTION PLAN) & RPL BK -->
-                <div class="program-section-box">
-                    <div class="program-section-title">VI. RENCANA OPERASIONAL (ACTION PLAN) & GENERATOR RPL BK</div>
-                    <p style="font-size: 12px; color: #4b5563; margin-bottom: 10px;">Klik tombol <b>"📄 Buat RPL BK"</b> di samping materi untuk mencetak Rencana Pelaksanaan Layanan sesuai format POP BK dan Kurikulum Berbasis Cinta.</p>
+                    <div class="program-section-title">IV. RENCANA OPERASIONAL MATRIKS PROGRAM</div>
                     <table>
                         <thead>
                             <tr>
                                 <th style="width: 30px;">No</th>
                                 <th>Bidang Layanan</th>
-                                <th>Topik / Materi Layanan</th>
-                                <th>Integrasi Kurikulum Cinta</th>
-                                <th>Strategi & Semester</th>
-                                <th style="text-align: right; width: 140px;">Aksi RPL BK</th>
+                                <th>Topik Kebutuhan</th>
+                                <th>Materi Bimbingan (Integrasi KBC)</th>
+                                <th>Strategi Layanan</th>
+                                <th>Semester</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -530,48 +782,12 @@
                                 <tr>
                                     <td>${idx + 1}</td>
                                     <td><span class="badge-bidang">${p.bidang}</span></td>
+                                    <td>${TOPIK_DCM[p.topik]}</td>
                                     <td><b>${p.materi}</b></td>
-                                    <td><span style="font-size: 11px; font-weight: bold; color: #047857;">❤️ ${p.nilaiCinta}</span></td>
-                                    <td>${p.strategi}<br><span style="font-size: 11px; color: #6b7280;">${p.sem} (${p.bulan})</span></td>
-                                    <td style="text-align: right;">
-                                        <button onclick="generateRPLBK(${p.topik})" class="btn-primary" style="padding: 4px 8px; font-size: 11px;">📄 Buat RPL BK</button>
-                                    </td>
+                                    <td>${p.strategi}</td>
+                                    <td><b>${p.sem}</b></td>
                                 </tr>
                             `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 7. PENGEMBANGAN TEMA & EVALUASI, PELAPORAN, TINDAK LANJUT -->
-                <div class="program-section-box">
-                    <div class="program-section-title">VII. EVALUASI, PELAPORAN, DAN TINDAK LANJUT</div>
-                    <p style="font-size: 13px; line-height: 1.6;">
-                        • <b>Evaluasi Proses:</b> Menilai keterlaksanaan layanan, antusiasme siswa, dan suasana kasih sayang selama pembelajaran.<br>
-                        • <b>Evaluasi Hasil:</b> Menilai pemahaman baru (Understanding), perasaan positif (Comfort), dan rencana tindakan (Action) peserta didik.<br>
-                        • <b>Pelaporan & Tindak Lanjut:</b> Pelaporan berkala kepada Kepala MTsN 7 Tasikmalaya serta pelaksanaan konseling atau rujukan (Referral) jika diperlukan.
-                    </p>
-                </div>
-
-                <!-- 8. ANGGARAN BIAYA -->
-                <div class="program-section-box">
-                    <div class="program-section-title">VIII. ESTIMASI ANGGARAN BIAYA OPERASIONAL BK</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Uraian Kebutuhan Operasional BK</th>
-                                <th>Volume</th>
-                                <th style="text-align: right;">Jumlah Biaya</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Pengadaan Instrumen Angket DCM & Buku Jurnal BK</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 300.000,-</td></tr>
-                            <tr><td>Operasional Home Visit / Kunjungan Rumah Siswa</td><td>10 Kegiatan</td><td style="text-align: right;">Rp 500.000,-</td></tr>
-                            <tr><td>Bahan & Alat Peraga Bimbingan Klasikal Berbasis Cinta</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 400.000,-</td></tr>
-                            <tr><td>Kegiatan Referral / Alih Tangan Kasus</td><td>Kondisional</td><td style="text-align: right;">Rp 300.000,-</td></tr>
-                            <tr style="font-weight: bold; background: #ecfdf5;">
-                                <td colspan="2" style="text-align: right;">TOTAL ESTIMASI BIAYA OPERASIONAL:</td>
-                                <td style="text-align: right; color: #047857;">Rp 1.500.000,-</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -582,130 +798,20 @@
                         <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
                         <br><br><br>
                         <p><b>___________________________</b></p>
+                        <p>NIP. -</p>
                     </div>
                     <div>
                         <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
                         <p><b>Guru Bimbingan Konseling</b></p>
                         <br><br><br>
                         <p><b>___________________________</b></p>
+                        <p>NIP. -</p>
                     </div>
                 </div>
             `;
         }
 
-        /* --- FUNGSI GENERATOR RPL BK (POP BK + KURIKULUM BERBASIS CINTA) --- */
-        let currentRPLHTML = "";
-
-        function generateRPLBK(topikIndex) {
-            const rek = REKOMENDASI_PROGRAM.find(p => p.topik === topikIndex);
-            if (!rek) return alert("Materi RPL tidak ditemukan.");
-
-            const kelasTarget = document.getElementById('filter-prota-kelas').value;
-            const labelKelas = kelasTarget === 'SEMUA' ? 'Semua Kelas IX' : `Kelas ${kelasTarget}`;
-
-            currentRPLHTML = `
-                <div id="rpl-print-area" style="font-size: 12px; line-height: 1.5; color: #1f2937;">
-                    <div style="text-align: center; border-bottom: 2px solid #047857; padding-bottom: 8px; margin-bottom: 14px;">
-                        <h3 style="font-size: 15px; font-weight: bold; color: #047857;">RENCANA PELAKSANAAN LAYANAN BIMBINGAN KLASIKAL (RPL BK)</h3>
-                        <p style="font-size: 12px; font-weight: bold;">STANDAR POP BK & KURIKULUM BERBASIS CINTA (KBC)</p>
-                        <p style="font-size: 11px;">MTsN 7 TASIKMALAYA - TAHUN AJARAN 2026/2027</p>
-                    </div>
-
-                    <table style="margin-bottom: 14px; border: 1px solid #d1d5db;">
-                        <tr><td style="width: 160px; background: #ecfdf5;"><b>Komponen Layanan</b></td><td>Layanan Dasar</td><td style="width: 140px; background: #ecfdf5;"><b>Sasaran / Kelas</b></td><td>${labelKelas}</td></tr>
-                        <tr><td style="background: #ecfdf5;"><b>Bidang Layanan</b></td><td>${rek.bidang}</td><td style="background: #ecfdf5;"><b>Semester / Waktu</b></td><td>${rek.sem} / 1 x 45 Menit</td></tr>
-                        <tr><td style="background: #ecfdf5;"><b>Topik / Tema Layanan</b></td><td><b>${rek.materi}</b></td><td style="background: #ecfdf5;"><b>Metode / Media</b></td><td>Sinema Edukasi / Diskusi & LKPD</td></tr>
-                        <tr><td style="background: #ecfdf5;"><b>Nilai Kurikulum Cinta</b></td><td colspan="3"><b style="color: #047857;">❤️ ${rek.nilaiCinta}</b></td></tr>
-                    </table>
-
-                    <h4 style="font-size: 13px; color: #047857; border-bottom: 1px solid #047857; padding-bottom: 2px; margin-bottom: 6px;">I. TUJUAN LAYANAN</h4>
-                    <p style="margin-bottom: 4px;"><b>1. Tujuan Umum:</b> Peserta didik mampu memahami dan menerapkan ${rek.materi} yang dijiwai rasa kasih sayang dan tanggung jawab.</p>
-                    <p style="margin-bottom: 8px;"><b>2. Tujuan Khusus (KBC):</b></p>
-                    <ul style="margin-left: 20px; margin-bottom: 12px;">
-                        <li>Peserta didik dapat menganalisis pentingnya ${rek.materi} (Cognitive).</li>
-                        <li>Peserta didik merasakan nilai kebaikan dan kasih sayang dalam ${rek.nilaiCinta} (Affective).</li>
-                        <li>Peserta didik dapat merancang langkah nyata tindakan positif dalam kehidupan sehari-hari (Action).</li>
-                    </ul>
-
-                    <h4 style="font-size: 13px; color: #047857; border-bottom: 1px solid #047857; padding-bottom: 2px; margin-bottom: 6px;">II. LANGKAH-LANGKAH KEGIATAN LAYANAN</h4>
-                    <table style="margin-bottom: 12px;">
-                        <thead>
-                            <tr style="background: #047857; color: white;">
-                                <th style="width: 110px;">Tahapan</th>
-                                <th>Uraian Kegiatan Guru BK & Peserta Didik (Berbasis Cinta)</th>
-                                <th style="width: 70px;">Waktu</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><b>1. Tahap Awal / Pendahuluan</b></td>
-                                <li>Guru BK membuka dengan salam hangat, doa, dan mengkondisikan suasana belajar yang Penuh Kasih Sayang.</li>
-                                <li>Apersepsi: Menyampaikan tujuan layanan dan mengkaitkannya dengan nilai **${rek.nilaiCinta}**.</li>
-                                <td>10 Menit</td>
-                            </tr>
-                            <tr>
-                                <td><b>2. Tahap Kerja (Inti)</b></td>
-                                <li>Guru BK menampilkan media/video pemantik atau kisah inspiratif seputar **${rek.materi}**.</li>
-                                <li>Peserta didik berdiskusi kelompok dengan empati dan saling menghargai pendapat sesama teman.</li>
-                                <li>Peserta didik mengisi Lembar Kerja Peserta Didik (LKPD) "Ungkapan Cinta & Komitmen Diri".</li>
-                                <td>25 Menit</td>
-                            </tr>
-                            <tr>
-                                <td><b>3. Tahap Penutup</b></td>
-                                <li>Peserta didik menyimpulkan pesan moral dan pemetikan hikmah berbasis Kurikulum Cinta.</li>
-                                <li>Guru BK memberikan apresiasi positif dan mengakhiri kegiatan dengan doa serta refleksi singkat.</li>
-                                <td>10 Menit</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <h4 style="font-size: 13px; color: #047857; border-bottom: 1px solid #047857; padding-bottom: 2px; margin-bottom: 6px;">III. EVALUASI DAN TINDAK LANJUT</h4>
-                    <p style="margin-bottom: 4px;"><b>1. Evaluasi Proses:</b> Guru BK mengamati keaktifan, kehangatan interaksi, serta antusiasme peserta didik selama diskusi.</p>
-                    <p style="margin-bottom: 8px;"><b>2. Evaluasi Hasil:</b> Mengukur pemahaman baru dan komitmen tindakan siswa melalui instrumen penilaian hasil (Understanding, Comfort, Action).</p>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 24px; text-align: center; font-size: 11px;">
-                        <div>
-                            <p>Mengetahui,</p>
-                            <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
-                            <br><br><br>
-                            <p><b>___________________________</b></p>
-                        </div>
-                        <div>
-                            <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
-                            <p><b>Guru Bimbingan Konseling</b></p>
-                            <br><br><br>
-                            <p><b>___________________________</b></p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('container-modal-rpl-body').innerHTML = currentRPLHTML;
-            document.getElementById('modal-rpl-bk').classList.remove('hidden');
-        }
-
-        function tutupModalRPL() {
-            document.getElementById('modal-rpl-bk').classList.add('hidden');
-        }
-
-        function cetakRPLWord() {
-            const htmlContent = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head><title>RPL BK POP BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #333; padding: 6px; text-align: left; }</style></head>
-                <body>${currentRPLHTML}</body>
-                </html>
-            `;
-            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `RPL_BK_POP_BK_Berbasis_Cinta.doc`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        /* --- FUNGSI DASAR SISTEM LAINNYA --- */
+        /* --- FUNGSI UTILITAS DATA & EVENT --- */
         function simpanResponDCM() {
             const nama = document.getElementById('siswa-nama').value;
             const kelas = document.getElementById('siswa-kelas').value;
@@ -1007,6 +1113,9 @@
                 const targetKelas = document.getElementById('filter-prota-kelas').value;
                 headerTitle = `DOKUMEN PROGRAM BK KOMPREHENSIF - KELAS ${targetKelas}`;
                 contentHTML = document.getElementById('container-program').innerHTML;
+            } else if(type === 'rpl') {
+                headerTitle = `RENCANA PELAKSANAAN LAYANAN (RPL) BK POP BK & KBC`;
+                contentHTML = document.getElementById('container-rpl-output').innerHTML;
             } else if(type === 'profil') {
                 headerTitle = "REKAPITULASI PROFIL MASALAH SISWA";
                 contentHTML = document.getElementById('sub-sec-kelompok').innerHTML;
