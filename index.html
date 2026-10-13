@@ -18,7 +18,6 @@
         .header-container { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .logo-box { display: flex; align-items: center; gap: 12px; }
         .badge-bk { width: 40px; height: 40px; background-color: white; color: #047857; border-radius: 50%; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .role-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #ecfdf5; color: #047857; cursor: pointer; border: 1px solid #10b981; }
         .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
         .online { background-color: #d1fae5; color: #065f46; }
         .offline { background-color: #fef3c7; color: #92400e; }
@@ -77,24 +76,24 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button id="btn-login-admin" onclick="toggleAdminAuth()" class="role-badge">🔒 Login Admin BK</button>
                 <div id="status-koneksi" class="status-badge online">● Mode Online</div>
             </div>
         </div>
     </header>
 
     <main>
+        <!-- SELURUH TAB TERBUKA scr BEBAS TANPA FITUR LOGIN/PIN -->
         <div class="tabs">
             <button onclick="switchTab('dcm')" id="tab-dcm" class="tab-btn active">📝 Isi DCM Siswa</button>
-            <button onclick="switchTab('murid')" id="tab-murid" class="tab-btn admin-only hidden">👨‍🎓 Data Murid 🔒</button>
-            <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn admin-only hidden">📊 Hasil & Profil 🔒</button>
-            <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program BK Komprehensif 🔒</button>
-            <button onclick="switchTab('rpl')" id="tab-rpl" class="tab-btn admin-only hidden">📋 RPL POP BK & KBC 🔒</button>
-            <button onclick="switchTab('materikbc')" id="tab-materikbc" class="tab-btn admin-only hidden">📚 Materi BK (KBC) 🔒</button>
-            <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal & Tindak Lanjut 🔒</button>
-            <button onclick="switchTab('surat')" id="tab-surat" class="tab-btn admin-only hidden">✉️ Surat Pemanggilan 🔒</button>
-            <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn admin-only hidden">✏️ Edit Angket 🔒</button>
-            <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
+            <button onclick="switchTab('murid')" id="tab-murid" class="tab-btn">👨‍🎓 Data Murid</button>
+            <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn">📊 Hasil & Profil</button>
+            <button onclick="switchTab('program')" id="tab-program" class="tab-btn">🎯 Program BK Komprehensif</button>
+            <button onclick="switchTab('rpl')" id="tab-rpl" class="tab-btn">📋 RPL POP BK & KBC</button>
+            <button onclick="switchTab('materikbc')" id="tab-materikbc" class="tab-btn">📚 Materi BK (KBC)</button>
+            <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn">📖 Jurnal & Tindak Lanjut</button>
+            <button onclick="switchTab('surat')" id="tab-surat" class="tab-btn">✉️ Surat Pemanggilan</button>
+            <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn">✏️ Edit Angket</button>
+            <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn">⚙️ Pengaturan</button>
         </div>
 
         <!-- TAB 1: ISI DCM SISWA -->
@@ -502,8 +501,6 @@
         }
         const db = typeof firebase !== 'undefined' ? firebase.database() : null;
 
-        const ADMIN_PIN = "1234";
-        let isAdminLoggedIn = false;
         let cloudDCMList = [];
 
         const TOPIK_DCM = [
@@ -597,36 +594,14 @@
                     });
                 }
                 localStorage.setItem('dcm_data_list', JSON.stringify(cloudDCMList));
-                if (isAdminLoggedIn) {
-                    loadProfil();
-                    updateDropdownSiswaProfilIndividu();
-                    generateProgramBK();
-                }
+                loadProfil();
+                updateDropdownSiswaProfilIndividu();
+                generateProgramBK();
             });
         }
 
-        // AUTHENTIKASI ADMIN
-        function toggleAdminAuth() {
-            if (isAdminLoggedIn) {
-                if (confirm("Logout dari Akses Admin BK?")) {
-                    isAdminLoggedIn = false;
-                    document.getElementById('btn-login-admin').innerText = "🔒 Login Admin BK";
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-                    switchTab('dcm');
-                }
-            } else {
-                const pin = prompt("Masukkan PIN Admin BK:");
-                if (pin === ADMIN_PIN) {
-                    isAdminLoggedIn = true;
-                    document.getElementById('btn-login-admin').innerText = "🔓 Logout Admin BK";
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                    alert("Berhasil Login Admin!");
-                } else if (pin !== null) alert("PIN Salah!");
-            }
-        }
-
+        // FUNGSI ALIH TAB BEBAS TANPA LOGIN/PIN
         function switchTab(tab) {
-            if (!isAdminLoggedIn && tab !== 'dcm') return alert("Fitur khusus Admin BK!");
             ['dcm', 'murid', 'profil', 'program', 'rpl', 'materikbc', 'jurnal', 'surat', 'editsoal', 'pengaturan'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
                 document.getElementById(`tab-${t}`).classList.remove('active');
@@ -1144,7 +1119,7 @@
                             }
                         }
                         alert(`Berhasil mengimpor ${count} data jawaban DCM siswa dari Excel!`);
-                        if(isAdminLoggedIn) { loadProfil(); generateProgramBK(); }
+                        loadProfil(); generateProgramBK();
                     }
                 } catch(err) {
                     alert("Gagal memproses file Excel. Pastikan format sesuai template.");
@@ -1726,4 +1701,263 @@
             selectTopik.innerHTML = TOPIK_DCM.map((t, idx) => `<option value="${idx}">${t}</option>`).join('');
 
             const tbody = document.getElementById('tabel-soal-body');
-            tbody.innerHTML =
+            tbody.innerHTML = soalList.map((s, idx) => `
+                <tr>
+                    <td><b>${idx + 1}</b></td>
+                    <td><span class="badge-bidang">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span></td>
+                    <td>${s.text}</td>
+                    <td style="text-align: right;">
+                        <button onclick="editSoal(${s.id})" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Edit</button>
+                        <button onclick="hapusSoal(${s.id})" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderSoal();
+        }
+
+        function tambahAtauEditSoal(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-soal-id').value;
+            const topik = parseInt(document.getElementById('edit-soal-topik').value);
+            const text = document.getElementById('edit-soal-text').value.trim();
+
+            let soalList = getDCMSoal();
+            if(id) {
+                const index = soalList.findIndex(s => s.id == id);
+                if(index !== -1) soalList[index] = { id: parseInt(id), topik, text };
+            } else {
+                soalList.push({ id: Date.now(), topik, text });
+            }
+
+            localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
+            resetFormSoal();
+            renderEditSoal();
+            alert('Pernyataan DCM berhasil disimpan!');
+        }
+
+        function editSoal(id) {
+            const soalList = getDCMSoal();
+            const target = soalList.find(s => s.id == id);
+            if(target) {
+                document.getElementById('edit-soal-id').value = target.id;
+                document.getElementById('edit-soal-topik').value = target.topik;
+                document.getElementById('edit-soal-text').value = target.text;
+                document.getElementById('btn-simpan-soal').innerText = '💾 Simpan Perubahan';
+                document.getElementById('btn-batal-soal').classList.remove('hidden');
+            }
+        }
+
+        function hapusSoal(id) {
+            if(confirm('Hapus butir soal ini?')) {
+                let soalList = getDCMSoal();
+                soalList = soalList.filter(s => s.id != id);
+                localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
+                renderEditSoal();
+            }
+        }
+
+        function hapusSemuaSoalAngket() {
+            if (confirm('⚠️ PERINGATAN!\nApakah Anda yakin ingin MENGHAPUS SELURUH BUTIR PERNYATAAN ANGKET DCM?')) {
+                localStorage.setItem('master_soal_dcm', JSON.stringify([]));
+                renderEditSoal();
+                alert('Seluruh butir pernyataan angket DCM berhasil dikosongkan!');
+            }
+        }
+
+        function resetFormSoal() {
+            document.getElementById('edit-soal-id').value = '';
+            document.getElementById('edit-soal-text').value = '';
+            document.getElementById('btn-simpan-soal').innerText = '➕ Tambah Butir Pernyataan';
+            document.getElementById('btn-batal-soal').classList.add('hidden');
+        }
+
+        function initKelas() {
+            let kelas = JSON.parse(localStorage.getItem('master_kelas')) || ['IX-A', 'IX-B', 'IX-C'];
+            return kelas;
+        }
+
+        function renderKelas() {
+            const kelas = initKelas();
+            document.getElementById('siswa-kelas').innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
+            document.getElementById('murid-kelas').innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
+            document.getElementById('filter-murid-kelas').innerHTML = `<option value="SEMUA">Semua Kelas</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+            document.getElementById('filter-prota-kelas').innerHTML = `<option value="SEMUA">Semua Kelas</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+            updateDropdownNamaSiswaDCM();
+        }
+
+        function renderSoal() {
+            const container = document.getElementById('container-soal');
+            const soalList = getDCMSoal();
+            if (soalList.length === 0) {
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #6b7280; background: #f9fafb; border-radius: 8px;">Belum ada butir angket DCM. Silakan tambah atau impor instrumen di menu Edit Angket.</div>`;
+                return;
+            }
+            container.innerHTML = soalList.map((s, idx) => `
+                <div class="soal-item">
+                    <div>
+                        <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span>
+                        <p style="font-size: 13px; font-weight: 500;">${idx + 1}. ${s.text}</p>
+                    </div>
+                    <input type="checkbox" id="soal-${s.id}" style="width: 20px; height: 20px;">
+                </div>
+            `).join('');
+        }
+
+        function getMuridData() { return JSON.parse(localStorage.getItem('master_murid')) || []; }
+
+        function renderTabelMurid() {
+            const list = getMuridData();
+            const filterKelas = document.getElementById('filter-murid-kelas').value;
+
+            let filteredList = list;
+            if(filterKelas !== 'SEMUA') {
+                filteredList = list.filter(m => m.kelas === filterKelas);
+            }
+
+            const tbody = document.getElementById('tabel-murid-body');
+            tbody.innerHTML = filteredList.map((m, idx) => `
+                <tr>
+                    <td><b>${idx + 1}</b></td>
+                    <td>${m.nisn}</td>
+                    <td><b>${m.nama}</b></td>
+                    <td><span class="badge-bidang">${m.kelas}</span></td>
+                    <td>${m.jk}</td>
+                    <td style="text-align: right;">
+                        <button onclick="hapusMurid('${m.nisn}')" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+            updateDropdownNamaSiswaDCM();
+        }
+
+        function tambahMurid(e) {
+            e.preventDefault();
+            const nisn = document.getElementById('murid-nisn').value.trim();
+            const nama = document.getElementById('murid-nama').value.trim().toUpperCase();
+            const kelas = document.getElementById('murid-kelas').value;
+            const jk = document.getElementById('murid-jk').value;
+
+            const list = getMuridData();
+            if(list.some(m => m.nisn === nisn)) {
+                alert('NIS / NISN murid sudah terdaftar!');
+                return;
+            }
+
+            list.push({ nisn, nama, kelas, jk });
+            localStorage.setItem('master_murid', JSON.stringify(list));
+            
+            document.getElementById('murid-nisn').value = '';
+            document.getElementById('murid-nama').value = '';
+            renderTabelMurid();
+            alert(`Murid ${nama} berhasil ditambahkan!`);
+        }
+
+        function hapusMurid(nisn) {
+            let list = getMuridData();
+            if(confirm(`Hapus murid ini?`)) {
+                list = list.filter(m => m.nisn !== nisn);
+                localStorage.setItem('master_murid', JSON.stringify(list));
+                renderTabelMurid();
+            }
+        }
+
+        function hapusMuridPerKelas() {
+            const filterKelas = document.getElementById('filter-murid-kelas').value;
+            let list = getMuridData();
+
+            if (filterKelas === 'SEMUA') {
+                if (confirm('Hapus seluruh murid dari SEMUA kelas?')) {
+                    localStorage.setItem('master_murid', JSON.stringify([]));
+                    renderTabelMurid();
+                }
+            } else {
+                if (confirm(`Hapus murid kelas ${filterKelas}?`)) {
+                    list = list.filter(m => m.kelas !== filterKelas);
+                    localStorage.setItem('master_murid', JSON.stringify(list));
+                    renderTabelMurid();
+                }
+            }
+        }
+
+        function updateDropdownNamaSiswaDCM() {
+            const kelas = document.getElementById('siswa-kelas').value;
+            const muridList = getMuridData().filter(m => m.kelas === kelas);
+            document.getElementById('siswa-nama').innerHTML = `<option value="">-- Pilih Siswa --</option>` + muridList.map(m => `<option value="${m.nama}">${m.nama}</option>`).join('');
+        }
+
+        function autoFillJenisKelaminDCM() {
+            const nama = document.getElementById('siswa-nama').value;
+            const murid = getMuridData().find(m => m.nama === nama);
+            if(murid) document.getElementById('siswa-jk').value = murid.jk;
+        }
+
+        function loadProfil() {
+            const counts = new Array(12).fill(0);
+            cloudDCMList.forEach(item => { item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); });
+            document.getElementById('ringkasan-topik').innerHTML = TOPIK_DCM.map((t, idx) => `
+                <div style="display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <span style="font-size: 13px; font-weight: 600;">${t}</span>
+                    <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">${counts[idx]} Masalah Dicentang</span>
+                </div>
+            `).join('');
+        }
+
+        function tambahKelas(e) {
+            e.preventDefault();
+            const input = document.getElementById('input-kelas-baru');
+            const kelasBaru = input.value.trim().toUpperCase();
+            if(kelasBaru) {
+                const kelas = initKelas();
+                if(!kelas.includes(kelasBaru)) {
+                    kelas.push(kelasBaru);
+                    kelas.sort();
+                    localStorage.setItem('master_kelas', JSON.stringify(kelas));
+                    input.value = '';
+                    renderKelas();
+                    alert(`Kelas ${kelasBaru} berhasil ditambahkan!`);
+                } else alert('Kelas sudah ada!');
+            }
+        }
+
+        function exportToWord(type) {
+            let headerTitle = "LAPORAN BIMBINGAN DAN KONSELING";
+            let contentHTML = "";
+
+            if(type === 'program') {
+                const targetKelas = document.getElementById('filter-prota-kelas').value;
+                headerTitle = `DOKUMEN PROGRAM BK KOMPREHENSIF - KELAS ${targetKelas}`;
+                contentHTML = document.getElementById('container-program').innerHTML;
+            } else if(type === 'rpl') {
+                headerTitle = `RENCANA PELAKSANAAN LAYANAN (RPL) BK POP BK & KBC`;
+                contentHTML = document.getElementById('container-rpl-output').innerHTML;
+            } else if(type === 'profil') {
+                headerTitle = "REKAPITULASI PROFIL MASALAH SISWA";
+                contentHTML = document.getElementById('sub-sec-kelompok').innerHTML;
+            }
+
+            const htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><title>Dokumen BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #333; padding: 8px; text-align: left; }</style></head>
+                <body>
+                    <h2 style="text-align: center; color: #047857;">${headerTitle}</h2>
+                    <hr><br>${contentHTML}
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${headerTitle.replace(/ /g, '_')}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        window.onload = () => { renderKelas(); renderSoal(); };
+    </script>
+</body>
+</html>
+
