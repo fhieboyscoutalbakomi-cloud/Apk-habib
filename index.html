@@ -72,7 +72,7 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, RPL POP BK & Kebijakan Excel Aktiv</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, Program BK Komprehensif & RPL KBC</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -87,7 +87,7 @@
             <button onclick="switchTab('dcm')" id="tab-dcm" class="tab-btn active">📝 Isi DCM Siswa</button>
             <button onclick="switchTab('murid')" id="tab-murid" class="tab-btn admin-only hidden">👨‍🎓 Data Murid 🔒</button>
             <button onclick="switchTab('profil')" id="tab-profil" class="tab-btn admin-only hidden">📊 Hasil & Profil 🔒</button>
-            <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program BK 🔒</button>
+            <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program BK Komprehensif 🔒</button>
             <button onclick="switchTab('rpl')" id="tab-rpl" class="tab-btn admin-only hidden">📋 RPL POP BK & KBC 🔒</button>
             <button onclick="switchTab('materikbc')" id="tab-materikbc" class="tab-btn admin-only hidden">📚 Materi BK (KBC) 🔒</button>
             <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal BK 🔒</button>
@@ -95,7 +95,7 @@
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
         </div>
 
-        <!-- TAB 1: ISI DCM SISWA (LENGKAP DENGAN FITUR EXCEL) -->
+        <!-- TAB 1: ISI DCM SISWA -->
         <section id="sec-dcm" class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -190,12 +190,12 @@
             </div>
         </section>
 
-        <!-- TAB 4: PROGRAM BK KOMPREHENSIF -->
+        <!-- TAB 4: PROGRAM BK KOMPREHENSIF LENGKAP -->
         <section id="sec-program" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 style="font-size: 18px;">Dokumen Program Bimbingan & Konseling Komprehensif</h2>
-                    <p style="font-size: 12px; color: #6b7280;">Program BK operasional berbasis asesmen DCM dan terintegrasi Kurikulum Berbasis Cinta (KBC).</p>
+                    <p style="font-size: 12px; color: #6b7280;">Program BK operasional berbasis asesmen DCM dan terintegrasi POP BK & Kurikulum Berbasis Cinta (KBC).</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Word (.doc)</button>
@@ -535,15 +535,246 @@
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FUNGSI MODUL EXCEL LENGKAP & AKTIF UNTUK SEMUA TAB --- */
+        /* --- FUNGSI DOKUMEN PROGRAM BK KOMPREHENSIF LENGKAP --- */
+        function generateProgramBK() {
+            const targetKelas = document.getElementById('filter-prota-kelas').value;
+            const muridList = getMuridData();
+            const container = document.getElementById('container-program');
+            
+            let targetMurid = targetKelas === 'SEMUA' ? muridList : muridList.filter(m => m.kelas === targetKelas);
 
-        // 1. DOWLOAD TEMPLATE EXCEL ISIAN JAWABAN DCM
+            const counts = new Array(12).fill(0);
+            let totalResponSiswa = 0;
+
+            cloudDCMList.forEach(item => {
+                if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
+                    totalResponSiswa++;
+                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                }
+            });
+
+            let programPrioritas = [];
+            counts.forEach((jumlah, idx) => {
+                const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
+                if (rek) programPrioritas.push({ ...rek, jumlah });
+            });
+
+            programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
+            const labelJudulTarget = targetKelas === 'SEMUA' ? 'Angkatan Paralel (Semua Kelas)' : `Kelas ${targetKelas}`;
+
+            container.innerHTML = `
+                <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #047857; padding-bottom: 12px;">
+                    <h2 style="font-size: 18px; color: #047857; font-weight: bold;">PROGRAM BIMBINGAN DAN KONSELING KOMPREHENSIF</h2>
+                    <h3 style="font-size: 14px; color: #374151;">MTsN 7 TASIKMALAYA - TAHUN AJARAN 2026/2027</h3>
+                    <p style="font-size: 12px; color: #6b7280;">Sasaran Target: <b>${labelJudulTarget}</b> | Total Murid: <b>${targetMurid.length}</b> | Sampel DCM: <b>${totalResponSiswa} Respon</b></p>
+                </div>
+
+                <!-- 1. RASIONAL -->
+                <div class="program-section-box">
+                    <div class="program-section-title">I. RASIONAL</div>
+                    <p style="font-size: 13px; line-height: 1.6; text-align: justify;">
+                        Perkembangan peserta didik/konseli di MTsN 7 Tasikmalaya mengalami berbagai perubahan fisik, emosional, dan sosial yang sangat dinamis. Layanan Bimbingan dan Konseling (BK) diselenggarakan secara terencana dan terstruktur untuk memfasilitasi kemandirian peserta didik dalam aspek pribadi, sosial, belajar, dan karir. Program bimbingan ini disusun berlandaskan analisis kebutuhan nyata (Need Assessment) melalui instrumen Daftar Cek Masalah (DCM) serta diintegrasikan dengan Kurikulum Berbasis Cinta (KBC).
+                    </p>
+                </div>
+
+                <!-- 2. VISI DAN MISI -->
+                <div class="program-section-box">
+                    <div class="program-section-title">II. VISI DAN MISI LAYANAN BK BERBASIS KBC</div>
+                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">A. Visi Layanan BK:</p>
+                    <p style="font-size: 13px; margin-bottom: 10px; font-style: italic; padding-left: 10px; border-left: 3px solid #047857;">
+                        "Terwujudnya layanan Bimbingan dan Konseling yang profesional berbasis Kurikulum Berbasis Cinta (KBC) dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, cinta lingkungan, serta cinta tanah air."
+                    </p>
+                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">B. Misi Layanan BK:</p>
+                    <ol style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li>Membangun kemandirian peserta didik melalui penanaman rasa Cinta Allah, Rasul-Nya, dan ilmu pengetahuan.</li>
+                        <li>Memfasilitasi pengentasan masalah peserta didik melalui konseling berbasis cinta kasih dan kelembutan empati.</li>
+                        <li>Menyelenggarakan layanan bimbingan klasikal dan kelompok berwawasan kelestarian lingkungan serta cinta tanah air.</li>
+                        <li>Menjalin kolaborasi sinergis dengan orang tua, guru, dan masyarakat madrasah.</li>
+                    </ol>
+                </div>
+
+                <!-- 3. DESKRIPSI KEBUTUHAN MASALAH -->
+                <div class="program-section-box">
+                    <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA)</div>
+                    <p style="font-size: 13px; margin-bottom: 10px;">Berdasarkan rekapitulasi data isian DCM pada sasaran <b>${labelJudulTarget}</b>, diperoleh urutan prioritas kebutuhan masalah peserta didik sebagai berikut:</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">No</th>
+                                <th>Bidang Topik DCM</th>
+                                <th>Jumlah Keluhan Siswa</th>
+                                <th>Persentase Masalah</th>
+                                <th>Kategori Prioritas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${programPrioritas.map((p, idx) => {
+                                const persentase = totalResponSiswa > 0 ? Math.round((p.jumlah / (totalResponSiswa * 12)) * 100) : 0;
+                                return `
+                                    <tr>
+                                        <td>${idx + 1}</td>
+                                        <td><b>${TOPIK_DCM[p.topik]}</b></td>
+                                        <td>${p.jumlah} Dicentang</td>
+                                        <td>${persentase}%</td>
+                                        <td><span class="badge-bidang" style="background: ${idx < 3 ? '#fef2f2' : '#ecfdf5'}; color: ${idx < 3 ? '#991b1b' : '#065f46'};">${idx < 3 ? 'Prioritas Tinggi' : 'Prioritas Sedang'}</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 4. TUJUAN LAYANAN -->
+                <div class="program-section-box">
+                    <div class="program-section-title">IV. TUJUAN LAYANAN</div>
+                    <p style="font-size: 13px; font-weight: bold;">1. Tujuan Umum:</p>
+                    <p style="font-size: 13px; margin-bottom: 8px; padding-left: 10px;">Membantu peserta didik agar dapat mencapai tugas-tugas perkembangannya secara optimal yang meliputi aspek pribadi, sosial, belajar, dan karir berlandaskan rasa cinta dan empati.</p>
+                    <p style="font-size: 13px; font-weight: bold;">2. Tujuan Khusus:</p>
+                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li>Peserta didik mampu memahami dan mengatasi masalah pribadi seperti kesehatan dan emosi.</li>
+                        <li>Peserta didik memiliki keterampilan hubungan interaksional yang harmonis dengan lingkungan sosial.</li>
+                        <li>Peserta didik mampu mengembangkan strategi belajar efektif dan regulasi diri yang disiplin.</li>
+                        <li>Peserta didik mampu merencanakan serta menentukan pilihan sekolah lanjutan sesuai potensi karir.</li>
+                    </ul>
+                </div>
+
+                <!-- 5. KOMPONEN PROGRAM -->
+                <div class="program-section-box">
+                    <div class="program-section-title">V. KOMPONEN PROGRAM</div>
+                    <p style="font-size: 13px; margin-bottom: 8px;">Program BK dilaksanakan melalui 4 (empat) komponen utama layanan:</p>
+                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li><b>Layanan Dasar (40-50%):</b> Bimbingan Klasikal, Bimbingan Kelompok, dan Edukasi Informasi.</li>
+                        <li><b>Layanan Responsif (20-30%):</b> Konseling Individual, Konseling Kelompok, Alih Tangan Kasus (Referral), dan Home Visit.</li>
+                        <li><b>Peminatan & Perencanaan Individual (15-20%):</b> Pendampingan Karir dan Penelusuran Minat Sekolah Lanjutan.</li>
+                        <li><b>Dukungan Sistem (10-15%):</b> Pengembangan Profesi, Manajemen Administrasi BK, dan Kolaborasi Orang Tua/Guru.</li>
+                    </ul>
+                </div>
+
+                <!-- 6. BIDANG LAYANAN -->
+                <div class="program-section-box">
+                    <div class="program-section-title">VI. BIDANG LAYANAN</div>
+                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li><b>Bidang Pribadi:</b> Membantu pemahaman diri, kepercayaan diri, manajemen emosi, dan kedisiplinan ibadah.</li>
+                        <li><b>Bidang Sosial:</b> Membantu etika pergaulan, empati antar sesama, pencegahan perundungan (bullying), dan adab bermasyarakat.</li>
+                        <li><b>Bidang Belajar:</b> Membantu pengembangan strategi belajar, manajemen waktu, dan persiapan menghadapi ujian.</li>
+                        <li><b>Bidang Karir:</b> Membantu penelusuran minat/bakat serta eksplorasi studi lanjutan setelah MTs.</li>
+                    </ul>
+                </div>
+
+                <!-- 7. RENCANA OPERASIONAL (ACTION PLAN) -->
+                <div class="program-section-box">
+                    <div class="program-section-title">VII. RENCANA OPERASIONAL (ACTION PLAN)</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;">No</th>
+                                <th>Bidang Layanan</th>
+                                <th>Topik Kebutuhan</th>
+                                <th>Materi Bimbingan (Integrasi KBC)</th>
+                                <th>Strategi Layanan</th>
+                                <th>Semester</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${programPrioritas.map((p, idx) => `
+                                <tr>
+                                    <td>${idx + 1}</td>
+                                    <td><span class="badge-bidang">${p.bidang}</span></td>
+                                    <td>${TOPIK_DCM[p.topik]}</td>
+                                    <td><b>${p.materi}</b></td>
+                                    <td>${p.strategi}</td>
+                                    <td><b>${p.sem}</b></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 8. PENGEMBANGAN TEMA / TOPIK JADWAL SEMESTER (PROMES) -->
+                <div class="program-section-box">
+                    <div class="program-section-title">VIII. PENGEMBANGAN TEMA / TOPIK JADWAL SEMESTER (PROMES)</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;">No</th>
+                                <th>Materi / Topik Layanan BK</th>
+                                <th>Semester</th>
+                                <th>Alokasi Perkiraan Bulan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${programPrioritas.map((p, idx) => `
+                                <tr>
+                                    <td>${idx + 1}</td>
+                                    <td><b>${p.materi}</b></td>
+                                    <td>${p.sem}</td>
+                                    <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">📅 ${p.bulan}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 9. EVALUASI, PELAPORAN, DAN TINDAK LANJUT -->
+                <div class="program-section-box">
+                    <div class="program-section-title">IX. EVALUASI, PELAPORAN, DAN TINDAK LANJUT</div>
+                    <p style="font-size: 13px; line-height: 1.6;">
+                        • <b>Evaluasi Proses:</b> Dilakukan oleh Guru BK untuk menilai keterlaksanaan jadwal, antusiasme peserta didik, serta kelancaran instrumen.<br>
+                        • <b>Evaluasi Hasil:</b> Dilakukan untuk mengukur tingkat pemahaman baru (Understanding), perasaan positif (Comfort), dan rencana tindakan (Action) peserta didik.<br>
+                        • <b>Pelaporan:</b> Penyusunan jurnal harian, rekapitulasi bulanan, serta laporan rekap semesteran kepada Kepala Madrasah.<br>
+                        • <b>Tindak Lanjut:</b> Pemberian konseling lanjutan, kunjungan rumah (Home Visit), atau alih tangan kasus (Referral) jika dibutuhkan.
+                    </p>
+                </div>
+
+                <!-- 10. ANGGARAN BIAYA -->
+                <div class="program-section-box">
+                    <div class="program-section-title">X. ESTIMASI ANGGARAN BIAYA OPERASIONAL BK</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Uraian Kegiatan / Kebutuhan Administrasi BK</th>
+                                <th>Volume / Satuan</th>
+                                <th style="text-align: right;">Estimasi Biaya</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>Pengadaan / Cetak Instrumen Angket DCM & Buku Catatan BK</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 300.000,-</td></tr>
+                            <tr><td>2</td><td>Home Visit / Kunjungan Rumah Peserta Didik Dampingan</td><td>10 Kali Layanan</td><td style="text-align: right;">Rp 500.000,-</td></tr>
+                            <tr><td>3</td><td>Media Layanan Bimbingan Klasikal (Kertas, Alat Peraga, Poster)</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 400.000,-</td></tr>
+                            <tr><td>4</td><td>Kegiatan Alih Tangan Kasus / Konsultasi Pihak Luar</td><td>Kondisional</td><td style="text-align: right;">Rp 300.000,-</td></tr>
+                            <tr style="font-weight: bold; background: #ecfdf5;">
+                                <td colspan="3" style="text-align: right;">TOTAL ESTIMASI ANGGARAN BIAYA OPERASIONAL BK:</td>
+                                <td style="text-align: right; color: #047857;">Rp 1.500.000,-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 30px; padding: 0 20px; text-align: center; font-size: 12px;">
+                    <div>
+                        <p>Mengetahui,</p>
+                        <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
+                        <br><br><br>
+                        <p><b>___________________________</b></p>
+                        <p>NIP. -</p>
+                    </div>
+                    <div>
+                        <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
+                        <p><b>Guru Bimbingan Konseling</b></p>
+                        <br><br><br>
+                        <p><b>___________________________</b></p>
+                        <p>NIP. -</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* --- FUNGSI MODUL EXCEL LENGKAP UNTUK SEMUA TAB --- */
         function downloadTemplateJawabanDCMExcel() {
             const soalList = getDCMSoal();
             const header = ["NAMA_SISWA", "KELAS", "JENIS_KELAMIN"];
-            soalList.forEach((s, idx) => {
-                header.push(`SOAL_${idx + 1}`);
-            });
+            soalList.forEach((s, idx) => header.push(`SOAL_${idx + 1}`));
 
             const dataTemplate = [
                 header,
@@ -557,7 +788,6 @@
             XLSX.writeFile(wb, "Template_Jawaban_DCM_Siswa.xlsx");
         }
 
-        // 2. IMPOR JAWABAN DCM SISWA DARI EXCEL
         function importResponDCMFromExcel(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -613,7 +843,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 3. EKSPOR JAWABAN DCM KE EXCEL
         function exportResponDCMToExcel() {
             const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
             const soalList = getDCMSoal();
@@ -642,7 +871,6 @@
             XLSX.writeFile(wb, "Hasil_Isian_DCM_Siswa.xlsx");
         }
 
-        // 4. TEMPLATE & EXPORT/IMPORT DATA MURID
         function downloadTemplateExcel() {
             const dataTemplate = [
                 ["NIS", "NAMA", "KELAS", "JK"],
@@ -711,7 +939,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 5. TEMPLATE & EXPORT/IMPORT ANGKET
         function downloadTemplateAngketExcel() {
             const dataTemplate = [
                 ["BIDANG_TOPIK", "PERNYATAAN_MASALAH"],
@@ -781,7 +1008,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 6. EXPORT & IMPORT JURNAL
         function exportToExcel(type) {
             if(type === 'jurnal') {
                 const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
@@ -1004,102 +1230,6 @@
         }
 
         /* --- FUNGSI DASAR SISTEM --- */
-        function generateProgramBK() {
-            const targetKelas = document.getElementById('filter-prota-kelas').value;
-            const muridList = getMuridData();
-            const container = document.getElementById('container-program');
-            
-            let targetMurid = targetKelas === 'SEMUA' ? muridList : muridList.filter(m => m.kelas === targetKelas);
-
-            const counts = new Array(12).fill(0);
-            let totalResponSiswa = 0;
-
-            cloudDCMList.forEach(item => {
-                if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
-                    totalResponSiswa++;
-                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
-                }
-            });
-
-            let programPrioritas = [];
-            counts.forEach((jumlah, idx) => {
-                const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
-                if (rek) programPrioritas.push({ ...rek, jumlah });
-            });
-
-            programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
-            const labelJudulTarget = targetKelas === 'SEMUA' ? 'Angkatan Paralel (Semua Kelas)' : `Kelas ${targetKelas}`;
-
-            container.innerHTML = `
-                <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #047857; padding-bottom: 12px;">
-                    <h2 style="font-size: 18px; color: #047857; font-weight: bold;">PROGRAM BIMBINGAN DAN KONSELING KOMPREHENSIF</h2>
-                    <h3 style="font-size: 14px; color: #374151;">MTsN 7 TASIKMALAYA - TAHUN AJARAN 2026/2027</h3>
-                    <p style="font-size: 12px; color: #6b7280;">Sasaran Target: <b>${labelJudulTarget}</b> | Total Murid: <b>${targetMurid.length}</b> | Sampel DCM: <b>${totalResponSiswa} Respon</b></p>
-                </div>
-
-                <div class="program-section-box">
-                    <div class="program-section-title">I. RASIONAL</div>
-                    <p style="font-size: 13px; line-height: 1.6; text-align: justify;">
-                        Perkembangan peserta didik/konseli di MTsN 7 Tasikmalaya mengalami berbagai perubahan fisik, emosional, dan sosial yang sangat dinamis. Layanan Bimbingan dan Konseling (BK) diselenggarakan secara terencana dan terstruktur untuk memfasilitasi kemandirian peserta didik dalam aspek pribadi, sosial, belajar, dan karir. Program bimbingan ini disusun berlandaskan analisis kebutuhan nyata (Need Assessment) melalui instrumen Daftar Cek Masalah (DCM) serta diintegrasikan dengan Kurikulum Berbasis Cinta (KBC).
-                    </p>
-                </div>
-
-                <div class="program-section-box">
-                    <div class="program-section-title">II. VISI DAN MISI LAYANAN BK BERBASIS KBC</div>
-                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">A. Visi Layanan BK:</p>
-                    <p style="font-size: 13px; margin-bottom: 10px; font-style: italic; padding-left: 10px; border-left: 3px solid #047857;">
-                        "Terwujudnya layanan Bimbingan dan Konseling yang profesional berbasis Kurikulum Berbasis Cinta (KBC) dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, cinta lingkungan, serta cinta tanah air."
-                    </p>
-                </div>
-
-                <div class="program-section-box">
-                    <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA)</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">No</th>
-                                <th>Bidang Topik DCM</th>
-                                <th>Jumlah Keluhan Siswa</th>
-                                <th>Persentase Masalah</th>
-                                <th>Kategori Prioritas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${programPrioritas.map((p, idx) => {
-                                const persentase = totalResponSiswa > 0 ? Math.round((p.jumlah / (totalResponSiswa * 12)) * 100) : 0;
-                                return `
-                                    <tr>
-                                        <td>${idx + 1}</td>
-                                        <td><b>${TOPIK_DCM[p.topik]}</b></td>
-                                        <td>${p.jumlah} Dicentang</td>
-                                        <td>${persentase}%</td>
-                                        <td><span class="badge-bidang" style="background: ${idx < 3 ? '#fef2f2' : '#ecfdf5'}; color: ${idx < 3 ? '#991b1b' : '#065f46'};">${idx < 3 ? 'Prioritas Tinggi' : 'Prioritas Sedang'}</span></td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; margin-top: 30px; padding: 0 20px; text-align: center; font-size: 12px;">
-                    <div>
-                        <p>Mengetahui,</p>
-                        <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
-                        <br><br><br>
-                        <p><b>___________________________</b></p>
-                        <p>NIP. -</p>
-                    </div>
-                    <div>
-                        <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
-                        <p><b>Guru Bimbingan Konseling</b></p>
-                        <br><br><br>
-                        <p><b>___________________________</b></p>
-                        <p>NIP. -</p>
-                    </div>
-                </div>
-            `;
-        }
-
         function simpanResponDCM() {
             const nama = document.getElementById('siswa-nama').value;
             const kelas = document.getElementById('siswa-kelas').value;
@@ -1351,7 +1481,7 @@
             document.getElementById('edit-soal-id').value = '';
             document.getElementById('edit-soal-text').value = '';
             document.getElementById('btn-simpan-soal').innerText = '➕ Tambah Butir Pernyataan';
-            document.getElementById('btn-batal-soal').classList.add('hidden');
+            document.getElementById('btn-batal-soal').classList.remove('hidden');
         }
 
         function initKelas() {
