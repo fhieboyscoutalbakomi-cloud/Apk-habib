@@ -73,7 +73,7 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, RPL POP BK, KBC & Administrasi ABKIN</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, Program BK Komprehensif, RPL POP BK & KBC</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -91,8 +91,8 @@
             <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program BK Komprehensif 🔒</button>
             <button onclick="switchTab('rpl')" id="tab-rpl" class="tab-btn admin-only hidden">📋 RPL POP BK & KBC 🔒</button>
             <button onclick="switchTab('materikbc')" id="tab-materikbc" class="tab-btn admin-only hidden">📚 Materi BK (KBC) 🔒</button>
-            <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal & Tindak Lanjut BK 🔒</button>
-            <button onclick="switchTab('surat')" id="tab-surat" class="tab-btn admin-only hidden">✉️ Surat Pemanggilan ABKIN 🔒</button>
+            <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal & Tindak Lanjut 🔒</button>
+            <button onclick="switchTab('surat')" id="tab-surat" class="tab-btn admin-only hidden">✉️ Surat Pemanggilan 🔒</button>
             <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn admin-only hidden">✏️ Edit Angket 🔒</button>
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
         </div>
@@ -197,7 +197,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 style="font-size: 18px;">Dokumen Program Bimbingan & Konseling Komprehensif</h2>
-                    <p style="font-size: 12px; color: #6b7280;">Program BK operasional berbasis asesmen DCM dan terintegrasi POP BK & Kurikulum Berbasis Cinta (KBC).</p>
+                    <p style="font-size: 12px; color: #6b7280;">Program BK operasional berbasis asesmen DCM, POP BK & Kurikulum Berbasis Cinta (KBC).</p>
                 </div>
                 <div class="action-bar" style="margin-bottom: 0;">
                     <button onclick="exportToWord('program')" class="btn-word">📄 Ekspor Word (.doc)</button>
@@ -298,7 +298,7 @@
             <div id="container-bank-materi"></div>
         </section>
 
-        <!-- TAB 7: JURNAL & TINDAK LANJUT BK (LENGKAP PENCAPAIAN KBC & STANDAR ABKIN) -->
+        <!-- TAB 7: JURNAL & TINDAK LANJUT BK -->
         <section id="sec-jurnal" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -370,7 +370,7 @@
             </table>
         </section>
 
-        <!-- TAB 8: TEMPLATE SURAT PEMANGGILAN STANDAR ABKIN & KBC -->
+        <!-- TAB 8: TEMPLATE SURAT PEMANGGILAN -->
         <section id="sec-surat" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -643,6 +643,241 @@
             if(tab === 'jurnal') initFormJurnal();
             if(tab === 'surat') initFormSurat();
             if(tab === 'editsoal') renderEditSoal();
+        }
+
+        /* --- FUNGSI DOKUMEN PROGRAM BK KOMPREHENSIF LENGKAP --- */
+        function generateProgramBK() {
+            const targetKelas = document.getElementById('filter-prota-kelas').value;
+            const muridList = getMuridData();
+            const container = document.getElementById('container-program');
+            
+            let targetMurid = targetKelas === 'SEMUA' ? muridList : muridList.filter(m => m.kelas === targetKelas);
+
+            const counts = new Array(12).fill(0);
+            let totalResponSiswa = 0;
+
+            cloudDCMList.forEach(item => {
+                if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
+                    totalResponSiswa++;
+                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                }
+            });
+
+            let programPrioritas = [];
+            counts.forEach((jumlah, idx) => {
+                const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
+                if (rek) programPrioritas.push({ ...rek, jumlah });
+            });
+
+            programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
+            const labelJudulTarget = targetKelas === 'SEMUA' ? 'Angkatan Paralel (Semua Kelas)' : `Kelas ${targetKelas}`;
+
+            container.innerHTML = `
+                <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #047857; padding-bottom: 12px;">
+                    <h2 style="font-size: 18px; color: #047857; font-weight: bold;">PROGRAM BIMBINGAN DAN KONSELING KOMPREHENSIF</h2>
+                    <h3 style="font-size: 14px; color: #374151;">MTsN 7 TASIKMALAYA - TAHUN AJARAN 2026/2027</h3>
+                    <p style="font-size: 12px; color: #6b7280;">Sasaran Target: <b>${labelJudulTarget}</b> | Total Murid: <b>${targetMurid.length}</b> | Sampel DCM: <b>${totalResponSiswa} Respon</b></p>
+                </div>
+
+                <!-- 1. RASIONAL -->
+                <div class="program-section-box">
+                    <div class="program-section-title">I. RASIONAL</div>
+                    <p style="font-size: 13px; line-height: 1.6; text-align: justify;">
+                        Perkembangan peserta didik/konseli di MTsN 7 Tasikmalaya mengalami berbagai perubahan fisik, emosional, dan sosial yang sangat dinamis. Layanan Bimbingan dan Konseling (BK) diselenggarakan secara terencana dan terstruktur untuk memfasilitasi kemandirian peserta didik dalam aspek pribadi, sosial, belajar, dan karir. Program bimbingan ini disusun berlandaskan analisis kebutuhan nyata (Need Assessment) melalui instrumen Daftar Cek Masalah (DCM) serta diintegrasikan dengan Kurikulum Berbasis Cinta (KBC).
+                    </p>
+                </div>
+
+                <!-- 2. VISI DAN MISI -->
+                <div class="program-section-box">
+                    <div class="program-section-title">II. VISI DAN MISI LAYANAN BK BERBASIS KBC</div>
+                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">A. Visi Layanan BK:</p>
+                    <p style="font-size: 13px; margin-bottom: 10px; font-style: italic; padding-left: 10px; border-left: 3px solid #047857;">
+                        "Terwujudnya layanan Bimbingan dan Konseling yang profesional berbasis Kurikulum Berbasis Cinta (KBC) dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, cinta lingkungan, serta cinta tanah air."
+                    </p>
+                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">B. Misi Layanan BK:</p>
+                    <ol style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li>Membangun kemandirian peserta didik melalui penanaman rasa Cinta Allah, Rasul-Nya, dan ilmu pengetahuan.</li>
+                        <li>Memfasilitasi pengentasan masalah peserta didik melalui konseling berbasis cinta kasih dan kelembutan empati.</li>
+                        <li>Menyelenggarakan layanan bimbingan klasikal dan kelompok berwawasan kelestarian lingkungan serta cinta tanah air.</li>
+                        <li>Menjalin kolaborasi sinergis dengan orang tua, guru, dan masyarakat madrasah.</li>
+                    </ol>
+                </div>
+
+                <!-- 3. DESKRIPSI KEBUTUHAN MASALAH -->
+                <div class="program-section-box">
+                    <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA)</div>
+                    <p style="font-size: 13px; margin-bottom: 10px;">Berdasarkan rekapitulasi data isian DCM pada sasaran <b>${labelJudulTarget}</b>, diperoleh urutan prioritas kebutuhan masalah peserta didik sebagai berikut:</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">No</th>
+                                <th>Bidang Topik DCM</th>
+                                <th>Jumlah Keluhan Siswa</th>
+                                <th>Persentase Masalah</th>
+                                <th>Kategori Prioritas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${programPrioritas.map((p, idx) => {
+                                const persentase = totalResponSiswa > 0 ? Math.round((p.jumlah / (totalResponSiswa * 12)) * 100) : 0;
+                                return `
+                                    <tr>
+                                        <td>${idx + 1}</td>
+                                        <td><b>${TOPIK_DCM[p.topik]}</b></td>
+                                        <td>${p.jumlah} Dicentang</td>
+                                        <td>${persentase}%</td>
+                                        <td><span class="badge-bidang" style="background: ${idx < 3 ? '#fef2f2' : '#ecfdf5'}; color: ${idx < 3 ? '#991b1b' : '#065f46'};">${idx < 3 ? 'Prioritas Tinggi' : 'Prioritas Sedang'}</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 4. TUJUAN LAYANAN -->
+                <div class="program-section-box">
+                    <div class="program-section-title">IV. TUJUAN LAYANAN</div>
+                    <p style="font-size: 13px; font-weight: bold;">1. Tujuan Umum:</p>
+                    <p style="font-size: 13px; margin-bottom: 8px; padding-left: 10px;">Membantu peserta didik agar dapat mencapai tugas-tugas perkembangannya secara optimal yang meliputi aspek pribadi, sosial, belajar, dan karir berlandaskan rasa cinta dan empati.</p>
+                    <p style="font-size: 13px; font-weight: bold;">2. Tujuan Khusus:</p>
+                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li>Peserta didik mampu memahami dan mengatasi masalah pribadi seperti kesehatan dan emosi.</li>
+                        <li>Peserta didik memiliki keterampilan hubungan interaksional yang harmonis dengan lingkungan sosial.</li>
+                        <li>Peserta didik mampu mengembangkan strategi belajar efektif dan regulasi diri yang disiplin.</li>
+                        <li>Peserta didik mampu merencanakan serta menentukan pilihan sekolah lanjutan sesuai potensi karir.</li>
+                    </ul>
+                </div>
+
+                <!-- 5. KOMPONEN PROGRAM -->
+                <div class="program-section-box">
+                    <div class="program-section-title">V. KOMPONEN PROGRAM</div>
+                    <p style="font-size: 13px; margin-bottom: 8px;">Program BK dilaksanakan melalui 4 (empat) komponen utama layanan:</p>
+                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li><b>Layanan Dasar (40-50%):</b> Bimbingan Klasikal, Bimbingan Kelompok, dan Edukasi Informasi.</li>
+                        <li><b>Layanan Responsif (20-30%):</b> Konseling Individual, Konseling Kelompok, Alih Tangan Kasus (Referral), dan Home Visit.</li>
+                        <li><b>Peminatan & Perencanaan Individual (15-20%):</b> Pendampingan Karir dan Penelusuran Minat Sekolah Lanjutan.</li>
+                        <li><b>Dukungan Sistem (10-15%):</b> Pengembangan Profesi, Manajemen Administrasi BK, dan Kolaborasi Orang Tua/Guru.</li>
+                    </ul>
+                </div>
+
+                <!-- 6. BIDANG LAYANAN -->
+                <div class="program-section-box">
+                    <div class="program-section-title">VI. BIDANG LAYANAN</div>
+                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+                        <li><b>Bidang Pribadi:</b> Membantu pemahaman diri, kepercayaan diri, manajemen emosi, dan kedisiplinan ibadah.</li>
+                        <li><b>Bidang Sosial:</b> Membantu etika pergaulan, empati antar sesama, pencegahan perundungan (bullying), dan adab bermasyarakat.</li>
+                        <li><b>Bidang Belajar:</b> Membantu pengembangan strategi belajar, manajemen waktu, dan persiapan menghadapi ujian.</li>
+                        <li><b>Bidang Karir:</b> Membantu penelusuran minat/bakat serta eksplorasi studi lanjutan setelah MTs.</li>
+                    </ul>
+                </div>
+
+                <!-- 7. RENCANA OPERASIONAL (ACTION PLAN) -->
+                <div class="program-section-box">
+                    <div class="program-section-title">VII. RENCANA OPERASIONAL (ACTION PLAN)</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;">No</th>
+                                <th>Bidang Layanan</th>
+                                <th>Topik Kebutuhan</th>
+                                <th>Materi Bimbingan (Integrasi KBC)</th>
+                                <th>Strategi Layanan</th>
+                                <th>Semester</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${programPrioritas.map((p, idx) => `
+                                <tr>
+                                    <td>${idx + 1}</td>
+                                    <td><span class="badge-bidang">${p.bidang}</span></td>
+                                    <td>${TOPIK_DCM[p.topik]}</td>
+                                    <td><b>${p.materi}</b></td>
+                                    <td>${p.strategi}</td>
+                                    <td><b>${p.sem}</b></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 8. PENGEMBANGAN TEMA / TOPIK JADWAL SEMESTER (PROMES) -->
+                <div class="program-section-box">
+                    <div class="program-section-title">VIII. PENGEMBANGAN TEMA / TOPIK JADWAL SEMESTER (PROMES)</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;">No</th>
+                                <th>Materi / Topik Layanan BK</th>
+                                <th>Semester</th>
+                                <th>Alokasi Perkiraan Bulan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${programPrioritas.map((p, idx) => `
+                                <tr>
+                                    <td>${idx + 1}</td>
+                                    <td><b>${p.materi}</b></td>
+                                    <td>${p.sem}</td>
+                                    <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">📅 ${p.bulan}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 9. EVALUASI, PELAPORAN, DAN TINDAK LANJUT -->
+                <div class="program-section-box">
+                    <div class="program-section-title">IX. EVALUASI, PELAPORAN, DAN TINDAK LANJUT</div>
+                    <p style="font-size: 13px; line-height: 1.6;">
+                        • <b>Evaluasi Proses:</b> Dilakukan oleh Guru BK untuk menilai keterlaksanaan jadwal, antusiasme peserta didik, serta kelancaran instrumen.<br>
+                        • <b>Evaluasi Hasil:</b> Dilakukan untuk mengukur tingkat pemahaman baru (Understanding), perasaan positif (Comfort), dan rencana tindakan (Action) peserta didik.<br>
+                        • <b>Pelaporan:</b> Penyusunan jurnal harian, rekapitulasi bulanan, serta laporan rekap semesteran kepada Kepala Madrasah.<br>
+                        • <b>Tindak Lanjut:</b> Pemberian konseling lanjutan, kunjungan rumah (Home Visit), atau alih tangan kasus (Referral) jika dibutuhkan.
+                    </p>
+                </div>
+
+                <!-- 10. ANGGARAN BIAYA -->
+                <div class="program-section-box">
+                    <div class="program-section-title">X. ESTIMASI ANGGARAN BIAYA OPERASIONAL BK</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Uraian Kegiatan / Kebutuhan Administrasi BK</th>
+                                <th>Volume / Satuan</th>
+                                <th style="text-align: right;">Estimasi Biaya</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>Pengadaan / Cetak Instrumen Angket DCM & Buku Catatan BK</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 300.000,-</td></tr>
+                            <tr><td>2</td><td>Home Visit / Kunjungan Rumah Peserta Didik Dampingan</td><td>10 Kali Layanan</td><td style="text-align: right;">Rp 500.000,-</td></tr>
+                            <tr><td>3</td><td>Media Layanan Bimbingan Klasikal (Kertas, Alat Peraga, Poster)</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 400.000,-</td></tr>
+                            <tr><td>4</td><td>Kegiatan Alih Tangan Kasus / Konsultasi Pihak Luar</td><td>Kondisional</td><td style="text-align: right;">Rp 300.000,-</td></tr>
+                            <tr style="font-weight: bold; background: #ecfdf5;">
+                                <td colspan="3" style="text-align: right;">TOTAL ESTIMASI ANGGARAN BIAYA OPERASIONAL BK:</td>
+                                <td style="text-align: right; color: #047857;">Rp 1.500.000,-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 30px; padding: 0 20px; text-align: center; font-size: 12px;">
+                    <div>
+                        <p>Mengetahui,</p>
+                        <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
+                        <br><br><br>
+                        <p><b>___________________________</b></p>
+                        <p>NIP. -</p>
+                    </div>
+                    <div>
+                        <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
+                        <p><b>Guru Bimbingan Konseling</b></p>
+                        <br><br><br>
+                        <p><b>___________________________</b></p>
+                        <p>NIP. -</p>
+                    </div>
+                </div>
+            `;
         }
 
         /* --- FITUR JURNAL BK, PENCAPAIAN KBC & TINDAK LANJUT --- */
@@ -1491,262 +1726,4 @@
             selectTopik.innerHTML = TOPIK_DCM.map((t, idx) => `<option value="${idx}">${t}</option>`).join('');
 
             const tbody = document.getElementById('tabel-soal-body');
-            tbody.innerHTML = soalList.map((s, idx) => `
-                <tr>
-                    <td><b>${idx + 1}</b></td>
-                    <td><span class="badge-bidang">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span></td>
-                    <td>${s.text}</td>
-                    <td style="text-align: right;">
-                        <button onclick="editSoal(${s.id})" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Edit</button>
-                        <button onclick="hapusSoal(${s.id})" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            renderSoal();
-        }
-
-        function tambahAtauEditSoal(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-soal-id').value;
-            const topik = parseInt(document.getElementById('edit-soal-topik').value);
-            const text = document.getElementById('edit-soal-text').value.trim();
-
-            let soalList = getDCMSoal();
-            if(id) {
-                const index = soalList.findIndex(s => s.id == id);
-                if(index !== -1) soalList[index] = { id: parseInt(id), topik, text };
-            } else {
-                soalList.push({ id: Date.now(), topik, text });
-            }
-
-            localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
-            resetFormSoal();
-            renderEditSoal();
-            alert('Pernyataan DCM berhasil disimpan!');
-        }
-
-        function editSoal(id) {
-            const soalList = getDCMSoal();
-            const target = soalList.find(s => s.id == id);
-            if(target) {
-                document.getElementById('edit-soal-id').value = target.id;
-                document.getElementById('edit-soal-topik').value = target.topik;
-                document.getElementById('edit-soal-text').value = target.text;
-                document.getElementById('btn-simpan-soal').innerText = '💾 Simpan Perubahan';
-                document.getElementById('btn-batal-soal').classList.remove('hidden');
-            }
-        }
-
-        function hapusSoal(id) {
-            if(confirm('Hapus butir soal ini?')) {
-                let soalList = getDCMSoal();
-                soalList = soalList.filter(s => s.id != id);
-                localStorage.setItem('master_soal_dcm', JSON.stringify(soalList));
-                renderEditSoal();
-            }
-        }
-
-        function hapusSemuaSoalAngket() {
-            if (confirm('⚠️ PERINGATAN!\nApakah Anda yakin ingin MENGHAPUS SELURUH BUTIR PERNYATAAN ANGKET DCM?')) {
-                localStorage.setItem('master_soal_dcm', JSON.stringify([]));
-                renderEditSoal();
-                alert('Seluruh butir pernyataan angket DCM berhasil dikosongkan!');
-            }
-        }
-
-        function resetFormSoal() {
-            document.getElementById('edit-soal-id').value = '';
-            document.getElementById('edit-soal-text').value = '';
-            document.getElementById('btn-simpan-soal').innerText = '➕ Tambah Butir Pernyataan';
-            document.getElementById('btn-batal-soal').classList.add('hidden');
-        }
-
-        function initKelas() {
-            let kelas = JSON.parse(localStorage.getItem('master_kelas')) || ['IX-A', 'IX-B', 'IX-C'];
-            return kelas;
-        }
-
-        function renderKelas() {
-            const kelas = initKelas();
-            document.getElementById('siswa-kelas').innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
-            document.getElementById('murid-kelas').innerHTML = kelas.map(k => `<option value="${k}">${k}</option>`).join('');
-            document.getElementById('filter-murid-kelas').innerHTML = `<option value="SEMUA">Semua Kelas</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
-            document.getElementById('filter-prota-kelas').innerHTML = `<option value="SEMUA">Semua Kelas</option>` + kelas.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
-            updateDropdownNamaSiswaDCM();
-        }
-
-        function renderSoal() {
-            const container = document.getElementById('container-soal');
-            const soalList = getDCMSoal();
-            if (soalList.length === 0) {
-                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #6b7280; background: #f9fafb; border-radius: 8px;">Belum ada butir angket DCM. Silakan tambah atau impor instrumen di menu Edit Angket.</div>`;
-                return;
-            }
-            container.innerHTML = soalList.map((s, idx) => `
-                <div class="soal-item">
-                    <div>
-                        <span style="font-size: 11px; font-weight: bold; color: #047857;">${TOPIK_DCM[s.topik] || "I. KESEHATAN"}</span>
-                        <p style="font-size: 13px; font-weight: 500;">${idx + 1}. ${s.text}</p>
-                    </div>
-                    <input type="checkbox" id="soal-${s.id}" style="width: 20px; height: 20px;">
-                </div>
-            `).join('');
-        }
-
-        function getMuridData() { return JSON.parse(localStorage.getItem('master_murid')) || []; }
-
-        function renderTabelMurid() {
-            const list = getMuridData();
-            const filterKelas = document.getElementById('filter-murid-kelas').value;
-
-            let filteredList = list;
-            if(filterKelas !== 'SEMUA') {
-                filteredList = list.filter(m => m.kelas === filterKelas);
-            }
-
-            const tbody = document.getElementById('tabel-murid-body');
-            tbody.innerHTML = filteredList.map((m, idx) => `
-                <tr>
-                    <td><b>${idx + 1}</b></td>
-                    <td>${m.nisn}</td>
-                    <td><b>${m.nama}</b></td>
-                    <td><span class="badge-bidang">${m.kelas}</span></td>
-                    <td>${m.jk}</td>
-                    <td style="text-align: right;">
-                        <button onclick="hapusMurid('${m.nisn}')" class="btn-danger" style="padding: 4px 8px; font-size: 11px;">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
-            updateDropdownNamaSiswaDCM();
-        }
-
-        function tambahMurid(e) {
-            e.preventDefault();
-            const nisn = document.getElementById('murid-nisn').value.trim();
-            const nama = document.getElementById('murid-nama').value.trim().toUpperCase();
-            const kelas = document.getElementById('murid-kelas').value;
-            const jk = document.getElementById('murid-jk').value;
-
-            const list = getMuridData();
-            if(list.some(m => m.nisn === nisn)) {
-                alert('NIS / NISN murid sudah terdaftar!');
-                return;
-            }
-
-            list.push({ nisn, nama, kelas, jk });
-            localStorage.setItem('master_murid', JSON.stringify(list));
-            
-            document.getElementById('murid-nisn').value = '';
-            document.getElementById('murid-nama').value = '';
-            renderTabelMurid();
-            alert(`Murid ${nama} berhasil ditambahkan!`);
-        }
-
-        function hapusMurid(nisn) {
-            let list = getMuridData();
-            if(confirm(`Hapus murid ini?`)) {
-                list = list.filter(m => m.nisn !== nisn);
-                localStorage.setItem('master_murid', JSON.stringify(list));
-                renderTabelMurid();
-            }
-        }
-
-        function hapusMuridPerKelas() {
-            const filterKelas = document.getElementById('filter-murid-kelas').value;
-            let list = getMuridData();
-
-            if (filterKelas === 'SEMUA') {
-                if (confirm('Hapus seluruh murid dari SEMUA kelas?')) {
-                    localStorage.setItem('master_murid', JSON.stringify([]));
-                    renderTabelMurid();
-                }
-            } else {
-                if (confirm(`Hapus murid kelas ${filterKelas}?`)) {
-                    list = list.filter(m => m.kelas !== filterKelas);
-                    localStorage.setItem('master_murid', JSON.stringify(list));
-                    renderTabelMurid();
-                }
-            }
-        }
-
-        function updateDropdownNamaSiswaDCM() {
-            const kelas = document.getElementById('siswa-kelas').value;
-            const muridList = getMuridData().filter(m => m.kelas === kelas);
-            document.getElementById('siswa-nama').innerHTML = `<option value="">-- Pilih Siswa --</option>` + muridList.map(m => `<option value="${m.nama}">${m.nama}</option>`).join('');
-        }
-
-        function autoFillJenisKelaminDCM() {
-            const nama = document.getElementById('siswa-nama').value;
-            const murid = getMuridData().find(m => m.nama === nama);
-            if(murid) document.getElementById('siswa-jk').value = murid.jk;
-        }
-
-        function loadProfil() {
-            const counts = new Array(12).fill(0);
-            cloudDCMList.forEach(item => { item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); });
-            document.getElementById('ringkasan-topik').innerHTML = TOPIK_DCM.map((t, idx) => `
-                <div style="display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
-                    <span style="font-size: 13px; font-weight: 600;">${t}</span>
-                    <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">${counts[idx]} Masalah Dicentang</span>
-                </div>
-            `).join('');
-        }
-
-        function tambahKelas(e) {
-            e.preventDefault();
-            const input = document.getElementById('input-kelas-baru');
-            const kelasBaru = input.value.trim().toUpperCase();
-            if(kelasBaru) {
-                const kelas = initKelas();
-                if(!kelas.includes(kelasBaru)) {
-                    kelas.push(kelasBaru);
-                    kelas.sort();
-                    localStorage.setItem('master_kelas', JSON.stringify(kelas));
-                    input.value = '';
-                    renderKelas();
-                    alert(`Kelas ${kelasBaru} berhasil ditambahkan!`);
-                } else alert('Kelas sudah ada!');
-            }
-        }
-
-        function exportToWord(type) {
-            let headerTitle = "LAPORAN BIMBINGAN DAN KONSELING";
-            let contentHTML = "";
-
-            if(type === 'program') {
-                const targetKelas = document.getElementById('filter-prota-kelas').value;
-                headerTitle = `DOKUMEN PROGRAM BK KOMPREHENSIF - KELAS ${targetKelas}`;
-                contentHTML = document.getElementById('container-program').innerHTML;
-            } else if(type === 'rpl') {
-                headerTitle = `RENCANA PELAKSANAAN LAYANAN (RPL) BK POP BK & KBC`;
-                contentHTML = document.getElementById('container-rpl-output').innerHTML;
-            } else if(type === 'profil') {
-                headerTitle = "REKAPITULASI PROFIL MASALAH SISWA";
-                contentHTML = document.getElementById('sub-sec-kelompok').innerHTML;
-            }
-
-            const htmlContent = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head><title>Dokumen BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #333; padding: 8px; text-align: left; }</style></head>
-                <body>
-                    <h2 style="text-align: center; color: #047857;">${headerTitle}</h2>
-                    <hr><br>${contentHTML}
-                </body>
-                </html>
-            `;
-
-            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${headerTitle.replace(/ /g, '_')}.doc`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        window.onload = () => { renderKelas(); renderSoal(); };
-    </script>
-</body>
-</html>
+            tbody.innerHTML =
