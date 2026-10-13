@@ -57,10 +57,11 @@
         .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
         .materi-card { border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; background: #ffffff; margin-bottom: 16px; transition: 0.2s; }
         .materi-card:hover { border-color: #047857; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .surat-box { background: white; border: 2px solid #047857; padding: 30px; border-radius: 8px; line-height: 1.6; font-size: 13px; color: #111827; }
         @media print {
-            header, footer, .tabs, .action-bar, .filter-box, .sub-tab-box, .role-badge, .btn-action-group { display: none !important; }
+            header, footer, .tabs, .action-bar, .filter-box, .sub-tab-box, .role-badge, .btn-action-group, form { display: none !important; }
             body { background: white; color: black; }
-            .card { box-shadow: none; padding: 0; }
+            .card { box-shadow: none; padding: 0; border: none; }
         }
     </style>
 </head>
@@ -72,7 +73,7 @@
                 <div class="badge-bk">BK</div>
                 <div>
                     <h1 style="font-size: 16px; font-weight: bold;">Layanan BK MTsN 7 Tasikmalaya</h1>
-                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, Program BK Komprehensif & RPL KBC</p>
+                    <p style="font-size: 11px; opacity: 0.8;">Sistem Konseling, RPL POP BK, KBC & Administrasi ABKIN</p>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -90,7 +91,8 @@
             <button onclick="switchTab('program')" id="tab-program" class="tab-btn admin-only hidden">🎯 Program BK Komprehensif 🔒</button>
             <button onclick="switchTab('rpl')" id="tab-rpl" class="tab-btn admin-only hidden">📋 RPL POP BK & KBC 🔒</button>
             <button onclick="switchTab('materikbc')" id="tab-materikbc" class="tab-btn admin-only hidden">📚 Materi BK (KBC) 🔒</button>
-            <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal BK 🔒</button>
+            <button onclick="switchTab('jurnal')" id="tab-jurnal" class="tab-btn admin-only hidden">📖 Jurnal & Tindak Lanjut BK 🔒</button>
+            <button onclick="switchTab('surat')" id="tab-surat" class="tab-btn admin-only hidden">✉️ Surat Pemanggilan ABKIN 🔒</button>
             <button onclick="switchTab('editsoal')" id="tab-editsoal" class="tab-btn admin-only hidden">✏️ Edit Angket 🔒</button>
             <button onclick="switchTab('pengaturan')" id="tab-pengaturan" class="tab-btn admin-only hidden">⚙️ Pengaturan 🔒</button>
         </div>
@@ -296,29 +298,136 @@
             <div id="container-bank-materi"></div>
         </section>
 
-        <!-- TAB 7: JURNAL -->
+        <!-- TAB 7: JURNAL & TINDAK LANJUT BK (LENGKAP PENCAPAIAN KBC & STANDAR ABKIN) -->
         <section id="sec-jurnal" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-                <h2 style="font-size: 18px;">Jurnal Bimbingan BK</h2>
+                <div>
+                    <h2 style="font-size: 18px;">Jurnal Bimbingan & Catatan Tindak Lanjut Konseling</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Catatan layanan harian, evaluasi pencapaian konseli (AKURS), dan rencana tindak lanjut.</p>
+                </div>
                 <div class="action-bar" style="margin-bottom: 0;">
                     <label class="btn-excel" style="display: inline-block; cursor: pointer;">
                         📥 Impor Jurnal (.xlsx) <input type="file" id="import-excel-file" accept=".xlsx, .xls, .csv" onchange="importJurnalFromExcel(event)" style="display: none;">
                     </label>
-                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal</button>
+                    <button onclick="exportToExcel('jurnal')" class="btn-excel">📊 Ekspor Jurnal Excel</button>
                 </div>
             </div>
-            <form onsubmit="tambahJurnal(event)" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+
+            <form onsubmit="tambahJurnal(event)" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
                 <div class="form-grid" style="background: none; padding: 0;">
-                    <div class="form-group"><label>Nama Siswa</label><input type="text" id="jurnal-nama" required></div>
-                    <div class="form-group"><label>Jenis Layanan</label><select id="jurnal-jenis"><option value="Konseling Individual">Konseling Individual</option><option value="Bimbingan Klasikal">Bimbingan Klasikal</option></select></div>
+                    <div class="form-group"><label>Nama Siswa / Konseli</label><input type="text" id="jurnal-nama" placeholder="Ketik nama lengkap..." required></div>
+                    <div class="form-group"><label>Kelas</label><select id="jurnal-kelas"></select></div>
+                    <div class="form-group"><label>Jenis Layanan BK</label>
+                        <select id="jurnal-jenis">
+                            <option value="Konseling Individual">Konseling Individual</option>
+                            <option value="Konseling Kelompok">Konseling Kelompok</option>
+                            <option value="Bimbingan Klasikal">Bimbingan Klasikal</option>
+                            <option value="Konsultasi Orang Tua">Konsultasi Orang Tua</option>
+                            <option value="Kunjungan Rumah (Home Visit)">Kunjungan Rumah (Home Visit)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 12px;"><label>Permasalahan</label><textarea id="jurnal-masalah" rows="2" required></textarea></div>
-                <button type="submit" class="btn-primary">➕ Simpan Catatan Jurnal</button>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Permasalahan / Topik Bahasan</label>
+                    <textarea id="jurnal-masalah" rows="2" placeholder="Uraikan keluhan/permasalahan konseli..." required></textarea>
+                </div>
+                <div class="form-grid" style="background: none; padding: 0;">
+                    <div class="form-group">
+                        <label>Pencapaian Setelah Konseling (Evaluasi KBC / AKURS ABKIN)</label>
+                        <select id="jurnal-pencapaian">
+                            <option value="Siswa Memahami Masalah & Memiliki Komitmen Perubahan Perilaku (Sangat Baik)">Sangat Baik (Siswa Paham & Berkomitmen Tinggi)</option>
+                            <option value="Siswa Menyadari Masalah & Mulai Menyusun Langkah Perbaikan (Baik)">Baik (Siswa Menyadari & Menyusun Solusi)</option>
+                            <option value="Siswa Masih Membutuhkan Pendampingan Emosi (Cukup)">Cukup (Masih Membutuhkan Bimbingan)</option>
+                            <option value="Siswa Belum Menunjukkan Keterbukaan / Resisten (Perlu Perhatian Khusus)">Perlu Perhatian (Resisten / Membutuhkan Home Visit)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rencana Tindak Lanjut (RTL)</label>
+                        <select id="jurnal-tindaklanjut">
+                            <option value="Layanan Selesai / Pemantauan Rutin Wali Kelas">Layanan Selesai / Pemantauan Berkala</option>
+                            <option value="Jadwal Konseling Individual Lanjutan">Jadwal Konseling Lanjutan</option>
+                            <option value="Pemanggilan Orang Tua / Wali Siswa ke Sekolah">Pemanggilan Orang Tua / Wali Siswa</option>
+                            <option value="Kunjungan Rumah (Home Visit)">Kunjungan Rumah (Home Visit)</option>
+                            <option value="Alih Tangan Kasus / Referral (Psikolog/Pihak Luar)">Alih Tangan Kasus (Referral)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">➕ Simpan Catatan Jurnal & Tindak Lanjut</button>
             </form>
-            <table><thead><tr><th>Tanggal</th><th>Siswa</th><th>Layanan</th><th>Permasalahan</th></tr></thead><tbody id="tabel-jurnal-body"></tbody></table>
+
+            <table style="overflow-x: auto; display: block;">
+                <thead>
+                    <tr>
+                        <th style="min-width: 90px;">Tanggal</th>
+                        <th style="min-width: 130px;">Nama Siswa</th>
+                        <th style="min-width: 120px;">Layanan</th>
+                        <th style="min-width: 180px;">Permasalahan</th>
+                        <th style="min-width: 180px;">Pencapaian Konseling (KBC/ABKIN)</th>
+                        <th style="min-width: 150px;">Tindak Lanjut</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-jurnal-body"></tbody>
+            </table>
         </section>
 
-        <!-- TAB 8: EDIT ANGKET -->
+        <!-- TAB 8: TEMPLATE SURAT PEMANGGILAN STANDAR ABKIN & KBC -->
+        <section id="sec-surat" class="card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px;">Generator Surat Pemanggilan Resmi BK (Standar ABKIN & KBC)</h2>
+                    <p style="font-size: 12px; color: #6b7280;">Buat Surat Pemanggilan Orang Tua/Wali atau Surat Pemanggilan Murid secara otomatis.</p>
+                </div>
+                <div class="action-bar" style="margin-bottom: 0;">
+                    <button onclick="exportSuratToWord()" class="btn-word">📄 Ekspor Surat ke Word (.doc)</button>
+                    <button onclick="window.print()" class="btn-secondary">🖨️ Cetak Surat PDF</button>
+                </div>
+            </div>
+
+            <form onsubmit="generateSuratBK(event)" style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div class="form-grid" style="background: none; padding: 0;">
+                    <div class="form-group">
+                        <label>Jenis Surat</label>
+                        <select id="surat-jenis">
+                            <option value="OrangTua">Surat Pemanggilan Orang Tua / Wali Siswa</option>
+                            <option value="Murid">Surat Pemanggilan Murid / Konseli</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nomor Surat</label>
+                        <input type="text" id="surat-nomor" value="005/BK/MTsN.7/2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Lengkap Siswa</label>
+                        <input type="text" id="surat-nama-siswa" placeholder="Ketik nama siswa..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Kelas</label>
+                        <select id="surat-kelas"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hari / Tanggal Pertemuan</label>
+                        <input type="text" id="surat-tgl-hadir" placeholder="Contoh: Senin, 19 Oktober 2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu Pertemuan</label>
+                        <input type="text" id="surat-waktu-hadir" value="09.00 WIB - Selesai" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Ruangan / Tempat</label>
+                        <input type="text" id="surat-tempat" value="Ruang Bimbingan dan Konseling MTsN 7 Tasikmalaya" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Keperluan / Maksud Pemanggilan</label>
+                        <input type="text" id="surat-keperluan" value="Konsultasi dan Pembahasan Perkembangan Belajar serta Karakter Siswa" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">⚡ Generate Surat Pemanggilan</button>
+            </form>
+
+            <div id="container-surat-output"></div>
+        </section>
+
+        <!-- TAB 9: EDIT ANGKET -->
         <section id="sec-editsoal" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -347,7 +456,7 @@
             <table><thead><tr><th>No</th><th>Bidang Topik</th><th>Butir Pernyataan</th><th style="text-align: right;">Aksi</th></tr></thead><tbody id="tabel-soal-body"></tbody></table>
         </section>
 
-        <!-- TAB 9: PENGATURAN KELAS -->
+        <!-- TAB 10: PENGATURAN KELAS -->
         <section id="sec-pengaturan" class="card hidden">
             <h2 style="font-size: 18px; margin-bottom: 12px;">Pengaturan Kelas</h2>
             <form onsubmit="tambahKelas(event)" style="display: flex; gap: 10px;">
@@ -518,7 +627,7 @@
 
         function switchTab(tab) {
             if (!isAdminLoggedIn && tab !== 'dcm') return alert("Fitur khusus Admin BK!");
-            ['dcm', 'murid', 'profil', 'program', 'rpl', 'materikbc', 'jurnal', 'editsoal', 'pengaturan'].forEach(t => {
+            ['dcm', 'murid', 'profil', 'program', 'rpl', 'materikbc', 'jurnal', 'surat', 'editsoal', 'pengaturan'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
                 document.getElementById(`tab-${t}`).classList.remove('active');
             });
@@ -531,246 +640,212 @@
             if(tab === 'program') generateProgramBK();
             if(tab === 'rpl') initRPLForm();
             if(tab === 'materikbc') renderBankMateriKBC();
-            if(tab === 'jurnal') renderJurnal();
+            if(tab === 'jurnal') initFormJurnal();
+            if(tab === 'surat') initFormSurat();
             if(tab === 'editsoal') renderEditSoal();
         }
 
-        /* --- FUNGSI DOKUMEN PROGRAM BK KOMPREHENSIF LENGKAP --- */
-        function generateProgramBK() {
-            const targetKelas = document.getElementById('filter-prota-kelas').value;
-            const muridList = getMuridData();
-            const container = document.getElementById('container-program');
-            
-            let targetMurid = targetKelas === 'SEMUA' ? muridList : muridList.filter(m => m.kelas === targetKelas);
-
-            const counts = new Array(12).fill(0);
-            let totalResponSiswa = 0;
-
-            cloudDCMList.forEach(item => {
-                if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
-                    totalResponSiswa++;
-                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
-                }
-            });
-
-            let programPrioritas = [];
-            counts.forEach((jumlah, idx) => {
-                const rek = REKOMENDASI_PROGRAM.find(p => p.topik === idx);
-                if (rek) programPrioritas.push({ ...rek, jumlah });
-            });
-
-            programPrioritas.sort((a, b) => b.jumlah - a.jumlah);
-            const labelJudulTarget = targetKelas === 'SEMUA' ? 'Angkatan Paralel (Semua Kelas)' : `Kelas ${targetKelas}`;
-
-            container.innerHTML = `
-                <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #047857; padding-bottom: 12px;">
-                    <h2 style="font-size: 18px; color: #047857; font-weight: bold;">PROGRAM BIMBINGAN DAN KONSELING KOMPREHENSIF</h2>
-                    <h3 style="font-size: 14px; color: #374151;">MTsN 7 TASIKMALAYA - TAHUN AJARAN 2026/2027</h3>
-                    <p style="font-size: 12px; color: #6b7280;">Sasaran Target: <b>${labelJudulTarget}</b> | Total Murid: <b>${targetMurid.length}</b> | Sampel DCM: <b>${totalResponSiswa} Respon</b></p>
-                </div>
-
-                <!-- 1. RASIONAL -->
-                <div class="program-section-box">
-                    <div class="program-section-title">I. RASIONAL</div>
-                    <p style="font-size: 13px; line-height: 1.6; text-align: justify;">
-                        Perkembangan peserta didik/konseli di MTsN 7 Tasikmalaya mengalami berbagai perubahan fisik, emosional, dan sosial yang sangat dinamis. Layanan Bimbingan dan Konseling (BK) diselenggarakan secara terencana dan terstruktur untuk memfasilitasi kemandirian peserta didik dalam aspek pribadi, sosial, belajar, dan karir. Program bimbingan ini disusun berlandaskan analisis kebutuhan nyata (Need Assessment) melalui instrumen Daftar Cek Masalah (DCM) serta diintegrasikan dengan Kurikulum Berbasis Cinta (KBC).
-                    </p>
-                </div>
-
-                <!-- 2. VISI DAN MISI -->
-                <div class="program-section-box">
-                    <div class="program-section-title">II. VISI DAN MISI LAYANAN BK BERBASIS KBC</div>
-                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">A. Visi Layanan BK:</p>
-                    <p style="font-size: 13px; margin-bottom: 10px; font-style: italic; padding-left: 10px; border-left: 3px solid #047857;">
-                        "Terwujudnya layanan Bimbingan dan Konseling yang profesional berbasis Kurikulum Berbasis Cinta (KBC) dalam membentuk peserta didik MTsN 7 Tasikmalaya yang mandiri, berkarakter Islami, unggul secara akademis, cinta lingkungan, serta cinta tanah air."
-                    </p>
-                    <p style="font-size: 13px; font-weight: bold; color: #047857; margin-bottom: 4px;">B. Misi Layanan BK:</p>
-                    <ol style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li>Membangun kemandirian peserta didik melalui penanaman rasa Cinta Allah, Rasul-Nya, dan ilmu pengetahuan.</li>
-                        <li>Memfasilitasi pengentasan masalah peserta didik melalui konseling berbasis cinta kasih dan kelembutan empati.</li>
-                        <li>Menyelenggarakan layanan bimbingan klasikal dan kelompok berwawasan kelestarian lingkungan serta cinta tanah air.</li>
-                        <li>Menjalin kolaborasi sinergis dengan orang tua, guru, dan masyarakat madrasah.</li>
-                    </ol>
-                </div>
-
-                <!-- 3. DESKRIPSI KEBUTUHAN MASALAH -->
-                <div class="program-section-box">
-                    <div class="program-section-title">III. DESKRIPSI KEBUTUHAN MASALAH (ASESMEN DATA)</div>
-                    <p style="font-size: 13px; margin-bottom: 10px;">Berdasarkan rekapitulasi data isian DCM pada sasaran <b>${labelJudulTarget}</b>, diperoleh urutan prioritas kebutuhan masalah peserta didik sebagai berikut:</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">No</th>
-                                <th>Bidang Topik DCM</th>
-                                <th>Jumlah Keluhan Siswa</th>
-                                <th>Persentase Masalah</th>
-                                <th>Kategori Prioritas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${programPrioritas.map((p, idx) => {
-                                const persentase = totalResponSiswa > 0 ? Math.round((p.jumlah / (totalResponSiswa * 12)) * 100) : 0;
-                                return `
-                                    <tr>
-                                        <td>${idx + 1}</td>
-                                        <td><b>${TOPIK_DCM[p.topik]}</b></td>
-                                        <td>${p.jumlah} Dicentang</td>
-                                        <td>${persentase}%</td>
-                                        <td><span class="badge-bidang" style="background: ${idx < 3 ? '#fef2f2' : '#ecfdf5'}; color: ${idx < 3 ? '#991b1b' : '#065f46'};">${idx < 3 ? 'Prioritas Tinggi' : 'Prioritas Sedang'}</span></td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 4. TUJUAN LAYANAN -->
-                <div class="program-section-box">
-                    <div class="program-section-title">IV. TUJUAN LAYANAN</div>
-                    <p style="font-size: 13px; font-weight: bold;">1. Tujuan Umum:</p>
-                    <p style="font-size: 13px; margin-bottom: 8px; padding-left: 10px;">Membantu peserta didik agar dapat mencapai tugas-tugas perkembangannya secara optimal yang meliputi aspek pribadi, sosial, belajar, dan karir berlandaskan rasa cinta dan empati.</p>
-                    <p style="font-size: 13px; font-weight: bold;">2. Tujuan Khusus:</p>
-                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li>Peserta didik mampu memahami dan mengatasi masalah pribadi seperti kesehatan dan emosi.</li>
-                        <li>Peserta didik memiliki keterampilan hubungan interaksional yang harmonis dengan lingkungan sosial.</li>
-                        <li>Peserta didik mampu mengembangkan strategi belajar efektif dan regulasi diri yang disiplin.</li>
-                        <li>Peserta didik mampu merencanakan serta menentukan pilihan sekolah lanjutan sesuai potensi karir.</li>
-                    </ul>
-                </div>
-
-                <!-- 5. KOMPONEN PROGRAM -->
-                <div class="program-section-box">
-                    <div class="program-section-title">V. KOMPONEN PROGRAM</div>
-                    <p style="font-size: 13px; margin-bottom: 8px;">Program BK dilaksanakan melalui 4 (empat) komponen utama layanan:</p>
-                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li><b>Layanan Dasar (40-50%):</b> Bimbingan Klasikal, Bimbingan Kelompok, dan Edukasi Informasi.</li>
-                        <li><b>Layanan Responsif (20-30%):</b> Konseling Individual, Konseling Kelompok, Alih Tangan Kasus (Referral), dan Home Visit.</li>
-                        <li><b>Peminatan & Perencanaan Individual (15-20%):</b> Pendampingan Karir dan Penelusuran Minat Sekolah Lanjutan.</li>
-                        <li><b>Dukungan Sistem (10-15%):</b> Pengembangan Profesi, Manajemen Administrasi BK, dan Kolaborasi Orang Tua/Guru.</li>
-                    </ul>
-                </div>
-
-                <!-- 6. BIDANG LAYANAN -->
-                <div class="program-section-box">
-                    <div class="program-section-title">VI. BIDANG LAYANAN</div>
-                    <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
-                        <li><b>Bidang Pribadi:</b> Membantu pemahaman diri, kepercayaan diri, manajemen emosi, dan kedisiplinan ibadah.</li>
-                        <li><b>Bidang Sosial:</b> Membantu etika pergaulan, empati antar sesama, pencegahan perundungan (bullying), dan adab bermasyarakat.</li>
-                        <li><b>Bidang Belajar:</b> Membantu pengembangan strategi belajar, manajemen waktu, dan persiapan menghadapi ujian.</li>
-                        <li><b>Bidang Karir:</b> Membantu penelusuran minat/bakat serta eksplorasi studi lanjutan setelah MTs.</li>
-                    </ul>
-                </div>
-
-                <!-- 7. RENCANA OPERASIONAL (ACTION PLAN) -->
-                <div class="program-section-box">
-                    <div class="program-section-title">VII. RENCANA OPERASIONAL (ACTION PLAN)</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 30px;">No</th>
-                                <th>Bidang Layanan</th>
-                                <th>Topik Kebutuhan</th>
-                                <th>Materi Bimbingan (Integrasi KBC)</th>
-                                <th>Strategi Layanan</th>
-                                <th>Semester</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${programPrioritas.map((p, idx) => `
-                                <tr>
-                                    <td>${idx + 1}</td>
-                                    <td><span class="badge-bidang">${p.bidang}</span></td>
-                                    <td>${TOPIK_DCM[p.topik]}</td>
-                                    <td><b>${p.materi}</b></td>
-                                    <td>${p.strategi}</td>
-                                    <td><b>${p.sem}</b></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 8. PENGEMBANGAN TEMA / TOPIK JADWAL SEMESTER (PROMES) -->
-                <div class="program-section-box">
-                    <div class="program-section-title">VIII. PENGEMBANGAN TEMA / TOPIK JADWAL SEMESTER (PROMES)</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 30px;">No</th>
-                                <th>Materi / Topik Layanan BK</th>
-                                <th>Semester</th>
-                                <th>Alokasi Perkiraan Bulan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${programPrioritas.map((p, idx) => `
-                                <tr>
-                                    <td>${idx + 1}</td>
-                                    <td><b>${p.materi}</b></td>
-                                    <td>${p.sem}</td>
-                                    <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">📅 ${p.bulan}</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 9. EVALUASI, PELAPORAN, DAN TINDAK LANJUT -->
-                <div class="program-section-box">
-                    <div class="program-section-title">IX. EVALUASI, PELAPORAN, DAN TINDAK LANJUT</div>
-                    <p style="font-size: 13px; line-height: 1.6;">
-                        • <b>Evaluasi Proses:</b> Dilakukan oleh Guru BK untuk menilai keterlaksanaan jadwal, antusiasme peserta didik, serta kelancaran instrumen.<br>
-                        • <b>Evaluasi Hasil:</b> Dilakukan untuk mengukur tingkat pemahaman baru (Understanding), perasaan positif (Comfort), dan rencana tindakan (Action) peserta didik.<br>
-                        • <b>Pelaporan:</b> Penyusunan jurnal harian, rekapitulasi bulanan, serta laporan rekap semesteran kepada Kepala Madrasah.<br>
-                        • <b>Tindak Lanjut:</b> Pemberian konseling lanjutan, kunjungan rumah (Home Visit), atau alih tangan kasus (Referral) jika dibutuhkan.
-                    </p>
-                </div>
-
-                <!-- 10. ANGGARAN BIAYA -->
-                <div class="program-section-box">
-                    <div class="program-section-title">X. ESTIMASI ANGGARAN BIAYA OPERASIONAL BK</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Uraian Kegiatan / Kebutuhan Administrasi BK</th>
-                                <th>Volume / Satuan</th>
-                                <th style="text-align: right;">Estimasi Biaya</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>1</td><td>Pengadaan / Cetak Instrumen Angket DCM & Buku Catatan BK</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 300.000,-</td></tr>
-                            <tr><td>2</td><td>Home Visit / Kunjungan Rumah Peserta Didik Dampingan</td><td>10 Kali Layanan</td><td style="text-align: right;">Rp 500.000,-</td></tr>
-                            <tr><td>3</td><td>Media Layanan Bimbingan Klasikal (Kertas, Alat Peraga, Poster)</td><td>1 Paket / Tahun</td><td style="text-align: right;">Rp 400.000,-</td></tr>
-                            <tr><td>4</td><td>Kegiatan Alih Tangan Kasus / Konsultasi Pihak Luar</td><td>Kondisional</td><td style="text-align: right;">Rp 300.000,-</td></tr>
-                            <tr style="font-weight: bold; background: #ecfdf5;">
-                                <td colspan="3" style="text-align: right;">TOTAL ESTIMASI ANGGARAN BIAYA OPERASIONAL BK:</td>
-                                <td style="text-align: right; color: #047857;">Rp 1.500.000,-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; margin-top: 30px; padding: 0 20px; text-align: center; font-size: 12px;">
-                    <div>
-                        <p>Mengetahui,</p>
-                        <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
-                        <br><br><br>
-                        <p><b>___________________________</b></p>
-                        <p>NIP. -</p>
-                    </div>
-                    <div>
-                        <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
-                        <p><b>Guru Bimbingan Konseling</b></p>
-                        <br><br><br>
-                        <p><b>___________________________</b></p>
-                        <p>NIP. -</p>
-                    </div>
-                </div>
-            `;
+        /* --- FITUR JURNAL BK, PENCAPAIAN KBC & TINDAK LANJUT --- */
+        function initFormJurnal() {
+            const kelasList = initKelas();
+            document.getElementById('jurnal-kelas').innerHTML = kelasList.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+            renderJurnal();
         }
 
-        /* --- FUNGSI MODUL EXCEL LENGKAP UNTUK SEMUA TAB --- */
+        function tambahJurnal(e) {
+            e.preventDefault();
+            const nama = document.getElementById('jurnal-nama').value.trim();
+            const kelas = document.getElementById('jurnal-kelas').value;
+            const jenis = document.getElementById('jurnal-jenis').value;
+            const masalah = document.getElementById('jurnal-masalah').value.trim();
+            const pencapaian = document.getElementById('jurnal-pencapaian').value;
+            const tindaklanjut = document.getElementById('jurnal-tindaklanjut').value;
+
+            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+            list.unshift({
+                tgl: new Date().toLocaleDateString('id-ID'),
+                nama, kelas, jenis, masalah, pencapaian, tindaklanjut
+            });
+
+            localStorage.setItem('jurnal_bk', JSON.stringify(list));
+            renderJurnal();
+
+            document.getElementById('jurnal-nama').value = '';
+            document.getElementById('jurnal-masalah').value = '';
+            alert('Catatan Jurnal, Pencapaian Konseling, dan Tindak Lanjut berhasil disimpan!');
+        }
+
+        function renderJurnal() {
+            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
+            const tbody = document.getElementById('tabel-jurnal-body');
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6b7280; padding: 15px;">Belum ada catatan jurnal bimbingan.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(i => `
+                <tr>
+                    <td>${i.tgl}</td>
+                    <td><b>${i.nama}</b><br><span style="font-size: 11px; color: #6b7280;">(${i.kelas || 'MTs'})</span></td>
+                    <td><span class="badge-bidang">${i.jenis}</span></td>
+                    <td>${i.masalah}</td>
+                    <td><span class="badge-kbc" style="font-size: 11px;">❤️ ${i.pencapaian || 'Sangat Baik'}</span></td>
+                    <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">📋 ${i.tindaklanjut || 'Selesai'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        /* --- FITUR SURAT PEMANGGILAN STANDAR ABKIN & KBC --- */
+        function initFormSurat() {
+            const kelasList = initKelas();
+            document.getElementById('surat-kelas').innerHTML = kelasList.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+        }
+
+        function generateSuratBK(e) {
+            e.preventDefault();
+            const jenisSurat = document.getElementById('surat-jenis').value;
+            const noSurat = document.getElementById('surat-nomor').value;
+            const namaSiswa = document.getElementById('surat-nama-siswa').value.toUpperCase();
+            const kelas = document.getElementById('surat-kelas').value;
+            const tglHadir = document.getElementById('surat-tgl-hadir').value;
+            const waktuHadir = document.getElementById('surat-waktu-hadir').value;
+            const tempat = document.getElementById('surat-tempat').value;
+            const keperluan = document.getElementById('surat-keperluan').value;
+
+            const container = document.getElementById('container-surat-output');
+
+            if (jenisSurat === "OrangTua") {
+                container.innerHTML = `
+                    <div class="surat-box">
+                        <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 16px;">
+                            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 2px;">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
+                            <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 2px; color: #047857;">MADRASAH TSANAWIYAH NEGERI 7 TASIKMALAYA</h2>
+                            <p style="font-size: 11px;">Jl. Raya Cikatomas No. 12, Kab. Tasikmalaya - Jawa Barat | Email: bk.mtsn7tasikmalaya@kemenag.go.id</p>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                            <div>
+                                <p>Nomor : ${noSurat}</p>
+                                <p>Lampiran : -</p>
+                                <p>Hal : <b>Undangan Konsultasi Orang Tua / Wali Siswa</b></p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
+                            </div>
+                        </div>
+
+                        <p>Kepada Yth.<br><b>Bapak / Ibu Orang Tua / Wali dari Sdr. ${namaSiswa}</b><br>di Tempat</p><br>
+
+                        <p style="text-align: justify; text-indent: 30px;">
+                            <i>Assalamu'alaikum Warahmatullahi Wabarakatuh.</i>
+                        </p>
+                        <p style="text-align: justify; margin-top: 6px;">
+                            Dengan hormat, dalam rangka meningkatkan sinergitas pendampingan perkembangan belajar dan pembentukan karakter Islami peserta didik berlandaskan <b>Kurikulum Berbasis Cinta (KBC)</b> dan Kode Etik Bimbingan Konseling Indonesia (ABKIN), kami mengharapkan kehadiran Bapak/Ibu Orang Tua/Wali siswa pada:
+                        </p>
+
+                        <table style="width: 100%; margin: 12px 0 12px 20px; border: none;">
+                            <tr><td style="width: 150px; border:none;">• Nama Siswa</td><td style="border:none;">: <b>${namaSiswa}</b></td></tr>
+                            <tr><td style="border:none;">• Kelas</td><td style="border:none;">: ${kelas}</td></tr>
+                            <tr><td style="border:none;">• Hari / Tanggal</td><td style="border:none;">: <b>${tglHadir}</b></td></tr>
+                            <tr><td style="border:none;">• Waktu</td><td style="border:none;">: ${waktuHadir}</td></tr>
+                            <tr><td style="border:none;">• Tempat</td><td style="border:none;">: ${tempat}</td></tr>
+                            <tr><td style="border:none;">• Maksud / Agenda</td><td style="border:none;">: ${keperluan}</td></tr>
+                        </table>
+
+                        <p style="text-align: justify;">
+                            Demikian surat undangan ini kami sampaikan. Atas perhatian, kerjsama, dan kehadiran Bapak/Ibu demi kebaikan perkembangan putra/putri kita, kami ucapkan terima kasih.
+                        </p>
+                        <p style="margin-top: 6px;"><i>Wassalamu'alaikum Warahmatullahi Wabarakatuh.</i></p>
+
+                        <div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
+                            <div>
+                                <p>Mengetahui,</p>
+                                <p><b>Kepala MTsN 7 Tasikmalaya</b></p>
+                                <br><br><br>
+                                <p><b>___________________________</b></p>
+                                <p>NIP. -</p>
+                            </div>
+                            <div>
+                                <p>Guru Bimbingan Konseling</p>
+                                <br><br><br><br>
+                                <p><b>___________________________</b></p>
+                                <p>NIP. -</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="surat-box">
+                        <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 16px;">
+                            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 2px;">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
+                            <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 2px; color: #047857;">MADRASAH TSANAWIYAH NEGERI 7 TASIKMALAYA</h2>
+                            <p style="font-size: 11px;">ORGANISASI BIMBINGAN DAN KONSELING (ABKIN MINTA)</p>
+                        </div>
+
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <h3 style="font-size: 15px; font-weight: bold; text-decoration: underline;">SURAT PEMANGGILAN KONSELI / MURID</h3>
+                            <p>Nomor : ${noSurat}</p>
+                        </div>
+
+                        <p>Kepada Yth.<br>Siswa/i: <b>${namaSiswa}</b><br>Kelas: <b>${kelas}</b><br>di Tempat</p><br>
+
+                        <p style="text-align: justify; text-indent: 30px;">
+                            <i>Assalamu'alaikum Warahmatullahi Wabarakatuh.</i>
+                        </p>
+                        <p style="text-align: justify; margin-top: 6px;">
+                            Dimohon kehadiran Saudara/i untuk menemui Guru Bimbingan dan Konseling di Ruang BK MTsN 7 Tasikmalaya pada:
+                        </p>
+
+                        <table style="width: 100%; margin: 12px 0 12px 20px; border: none;">
+                            <tr><td style="width: 150px; border:none;">• Hari / Tanggal</td><td style="border:none;">: <b>${tglHadir}</b></td></tr>
+                            <tr><td style="border:none;">• Waktu</td><td style="border:none;">: ${waktuHadir}</td></tr>
+                            <tr><td style="border:none;">• Tempat</td><td style="border:none;">: ${tempat}</td></tr>
+                            <tr><td style="border:none;">• Keperluan</td><td style="border:none;">: <b>${keperluan}</b></td></tr>
+                        </table>
+
+                        <p style="text-align: justify;">
+                            Layanan konseling ini bersifat tertutup, ramah, dan mengedepankan asas kerahasiaan sesuai Kode Etik ABKIN dan Kurikulum Berbasis Cinta (KBC). Harap hadir tepat waktu.
+                        </p>
+                        <p style="margin-top: 6px;"><i>Wassalamu'alaikum Warahmatullahi Wabarakatuh.</i></p>
+
+                        <div style="display: flex; justify-content: flex-end; margin-top: 30px; text-align: center;">
+                            <div>
+                                <p>Tasikmalaya, ${new Date().toLocaleDateString('id-ID')}</p>
+                                <p>Guru Bimbingan Konseling</p>
+                                <br><br><br>
+                                <p><b>___________________________</b></p>
+                                <p>NIP. -</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function exportSuratToWord() {
+            const content = document.getElementById('container-surat-output').innerHTML;
+            if(!content) return alert("Silakan klik 'Generate Surat Pemanggilan' terlebih dahulu!");
+
+            const htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><title>Surat Pemanggilan BK</title><style>body { font-family: Arial, sans-serif; padding: 20px; }</style></head>
+                <body>${content}</body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Surat_Pemanggilan_BK.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        /* --- FUNGSI EXCEL LENGKAP UTK SEMUA TAB --- */
         function downloadTemplateJawabanDCMExcel() {
             const soalList = getDCMSoal();
             const header = ["NAMA_SISWA", "KELAS", "JENIS_KELAMIN"];
@@ -1011,11 +1086,11 @@
         function exportToExcel(type) {
             if(type === 'jurnal') {
                 const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-                const dataExport = [["Tanggal", "Nama Siswa", "Jenis Layanan", "Ringkasan Permasalahan"]];
-                list.forEach(i => dataExport.push([i.tgl, i.nama, i.jenis, i.masalah]));
+                const dataExport = [["Tanggal", "Nama Siswa", "Kelas", "Jenis Layanan", "Permasalahan", "Pencapaian Konseling", "Tindak Lanjut"]];
+                list.forEach(i => dataExport.push([i.tgl, i.nama, i.kelas, i.jenis, i.masalah, i.pencapaian, i.tindaklanjut]));
 
                 const ws = XLSX.utils.aoa_to_sheet(dataExport);
-                ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 40 }];
+                ws['!cols'] = [{ wch: 12 }, { wch: 25 }, { wch: 10 }, { wch: 20 }, { wch: 35 }, { wch: 30 }, { wch: 25 }];
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Jurnal BK");
                 XLSX.writeFile(wb, "Jurnal_Konseling_BK_MTsN7.xlsx");
@@ -1058,8 +1133,11 @@
                                 list.unshift({
                                     tgl: String(row[0] || new Date().toLocaleDateString('id-ID')),
                                     nama: String(row[1] || "Siswa Import"),
-                                    jenis: String(row[2] || "Konseling Individual"),
-                                    masalah: String(row[3] || "-")
+                                    kelas: String(row[2] || "IX-A"),
+                                    jenis: String(row[3] || "Konseling Individual"),
+                                    masalah: String(row[4] || "-"),
+                                    pencapaian: String(row[5] || "Sangat Baik"),
+                                    tindaklanjut: String(row[6] || "Layanan Selesai")
                                 });
                             }
                         }
@@ -1481,7 +1559,7 @@
             document.getElementById('edit-soal-id').value = '';
             document.getElementById('edit-soal-text').value = '';
             document.getElementById('btn-simpan-soal').innerText = '➕ Tambah Butir Pernyataan';
-            document.getElementById('btn-batal-soal').classList.remove('hidden');
+            document.getElementById('btn-batal-soal').classList.add('hidden');
         }
 
         function initKelas() {
@@ -1612,32 +1690,6 @@
                     <span style="font-size: 13px; font-weight: 600;">${t}</span>
                     <span style="font-size: 12px; font-weight: bold; color: ${counts[idx] > 0 ? '#dc2626' : '#059669'};">${counts[idx]} Masalah Dicentang</span>
                 </div>
-            `).join('');
-        }
-
-        function tambahJurnal(e) {
-            e.preventDefault();
-            const nama = document.getElementById('jurnal-nama').value;
-            const jenis = document.getElementById('jurnal-jenis').value;
-            const masalah = document.getElementById('jurnal-masalah').value;
-
-            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-            list.unshift({ tgl: new Date().toLocaleDateString('id-ID'), nama, jenis, masalah });
-            localStorage.setItem('jurnal_bk', JSON.stringify(list));
-            renderJurnal();
-            document.getElementById('jurnal-masalah').value = '';
-            document.getElementById('jurnal-nama').value = '';
-        }
-
-        function renderJurnal() {
-            const list = JSON.parse(localStorage.getItem('jurnal_bk') || '[]');
-            document.getElementById('tabel-jurnal-body').innerHTML = list.map(i => `
-                <tr>
-                    <td>${i.tgl}</td>
-                    <td><b>${i.nama}</b></td>
-                    <td><span class="badge-bidang">${i.jenis}</span></td>
-                    <td>${i.masalah}</td>
-                </tr>
             `).join('');
         }
 
