@@ -82,7 +82,7 @@
     </header>
 
     <main>
-        <!-- SELURUH TAB TERBUKA scr BEBAS TANPA FITUR LOGIN/PIN -->
+        <!-- SELURUH TAB TERBUKA KINI BISA DIAKSES -->
         <div class="tabs">
             <button onclick="switchTab('dcm')" id="tab-dcm" class="tab-btn active">📝 Isi DCM Siswa</button>
             <button onclick="switchTab('murid')" id="tab-murid" class="tab-btn">👨‍🎓 Data Murid</button>
@@ -128,8 +128,8 @@
             </div>
             <div id="container-soal"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                <span style="font-size: 11px; color: #6b7280;">*Data otomatis tersinkron ke Cloud server BK.</span>
-                <button onclick="simpanResponDCM()" class="btn-primary">💾 Simpan Jawaban DCM</button>
+                <span style="font-size: 11px; color: #6b7280;">*Data otomatis tersinkron ke Cloud server BK & penyimpanan lokal.</span>
+                <button type="button" onclick="simpanResponDCM()" class="btn-primary" id="btn-simpan-dcm">💾 Simpan Jawaban DCM</button>
             </div>
         </section>
 
@@ -497,11 +497,11 @@
         };
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+            try { firebase.initializeApp(firebaseConfig); } catch(e) {}
         }
-        const db = typeof firebase !== 'undefined' ? firebase.database() : null;
+        const db = (typeof firebase !== 'undefined' && firebase.apps.length) ? firebase.database() : null;
 
-        let cloudDCMList = [];
+        let cloudDCMList = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
 
         const TOPIK_DCM = [
             "I. KESEHATAN", "II. KEADAAN EKONOMI", "III. KEHIDUPAN KELUARGA",
@@ -597,10 +597,12 @@
                 loadProfil();
                 updateDropdownSiswaProfilIndividu();
                 generateProgramBK();
+            }, (err) => {
+                console.log("Menggunakan penyimpanan data lokal.");
             });
         }
 
-        // FUNGSI ALIH TAB BEBAS TANPA LOGIN/PIN
+        // FUNGSI ALIH TAB BEBAS
         function switchTab(tab) {
             ['dcm', 'murid', 'profil', 'program', 'rpl', 'materikbc', 'jurnal', 'surat', 'editsoal', 'pengaturan'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
@@ -620,6 +622,70 @@
             if(tab === 'editsoal') renderEditSoal();
         }
 
+        /* --- PERBAIKAN FUNGSI SIMPAN JAWABAN DCM --- */
+        function simpanResponDCM() {
+            const namaEl = document.getElementById('siswa-nama');
+            const kelasEl = document.getElementById('siswa-kelas');
+            
+            const nama = namaEl ? namaEl.value : '';
+            const kelas = kelasEl ? kelasEl.value : '';
+
+            if(!nama) {
+                alert('Harap pilih nama siswa terlebih dahulu!');
+                return;
+            }
+
+            const soalList = getDCMSoal();
+            const respon = soalList.map(s => {
+                const chk = document.getElementById(`soal-${s.id}`);
+                return {
+                    topik: s.topik,
+                    isMasalah: (chk && chk.checked) ? 1 : 0
+                };
+            });
+
+            const keyBaru = 'dcm_' + Date.now();
+            const dataBaru = { 
+                keyFirebase: keyBaru,
+                nama: nama, 
+                kelas: kelas, 
+                respon: respon, 
+                tgl: new Date().toLocaleDateString('id-ID') 
+            };
+
+            // Simpan ke LocalStorage secara langsung
+            const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            listData.push(dataBaru);
+            localStorage.setItem('dcm_data_list', JSON.stringify(listData));
+            cloudDCMList = listData;
+
+            // Jika Firebase aktif, kirim juga ke cloud Database
+            if(db) {
+                try {
+                    db.ref('dcm_data_list').push({
+                        nama: nama,
+                        kelas: kelas,
+                        respon: respon,
+                        tgl: new Date().toLocaleDateString('id-ID')
+                    });
+                } catch(e) { console.log("Gagal sinkron cloud, tersimpan di lokal."); }
+            }
+
+            alert(`Jawaban DCM untuk siswa ${nama} (${kelas}) BERHASIL DISIMPAN!`);
+
+            // Reset Form Ceklis Soal
+            soalList.forEach(s => { 
+                const el = document.getElementById(`soal-${s.id}`); 
+                if(el) el.checked = false; 
+            });
+            namaEl.value = '';
+
+            // Update Tampilan Profil & Program BK secara Realtime
+            loadProfil();
+            updateDropdownSiswaProfilIndividu();
+            generateProgramBK();
+        }
+
         /* --- FUNGSI DOKUMEN PROGRAM BK KOMPREHENSIF LENGKAP --- */
         function generateProgramBK() {
             const targetKelas = document.getElementById('filter-prota-kelas').value;
@@ -634,7 +700,9 @@
             cloudDCMList.forEach(item => {
                 if(targetKelas === 'SEMUA' || item.kelas === targetKelas) {
                     totalResponSiswa++;
-                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                    if (item.respon && Array.isArray(item.respon)) {
+                        item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; });
+                    }
                 }
             });
 
@@ -1089,6 +1157,7 @@
                     if(jsonData.length > 1) {
                         const soalList = getDCMSoal();
                         let count = 0;
+                        const localList = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
 
                         for(let i = 1; i < jsonData.length; i++) {
                             const row = jsonData[i];
@@ -1106,18 +1175,18 @@
                                     });
                                 }
 
-                                const dataBaru = { nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') };
+                                const dataBaru = { keyFirebase: 'dcm_' + Date.now() + '_' + i, nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') };
+                                localList.push(dataBaru);
 
                                 if(db) {
-                                    db.ref('dcm_data_list').push(dataBaru);
-                                } else {
-                                    const localList = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-                                    localList.push(dataBaru);
-                                    localStorage.setItem('dcm_data_list', JSON.stringify(localList));
+                                    try { db.ref('dcm_data_list').push({ nama, kelas, respon, tgl: dataBaru.tgl }); } catch(err){}
                                 }
                                 count++;
                             }
                         }
+
+                        localStorage.setItem('dcm_data_list', JSON.stringify(localList));
+                        cloudDCMList = localList;
                         alert(`Berhasil mengimpor ${count} data jawaban DCM siswa dari Excel!`);
                         loadProfil(); generateProgramBK();
                     }
@@ -1143,7 +1212,7 @@
                 let total = 0;
                 const rowRespon = [];
                 soalList.forEach((s, idx) => {
-                    const isM = item.respon[idx] && item.respon[idx].isMasalah === 1 ? 1 : 0;
+                    const isM = item.respon && item.respon[idx] && item.respon[idx].isMasalah === 1 ? 1 : 0;
                     if(isM) total++;
                     rowRespon.push(isM);
                 });
@@ -1307,7 +1376,7 @@
             } else if(type === 'profil') {
                 const data = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
                 const counts = new Array(12).fill(0);
-                data.forEach(item => { item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); });
+                data.forEach(item => { if(item.respon) item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); });
                 
                 const dataExport = [["Bidang Topik DCM", "Jumlah Dicentang Siswa", "Status Derajat Masalah"]];
                 TOPIK_DCM.forEach((t, idx) => {
@@ -1517,37 +1586,7 @@
             `).join('');
         }
 
-        /* --- FUNGSI DASAR SISTEM --- */
-        function simpanResponDCM() {
-            const nama = document.getElementById('siswa-nama').value;
-            const kelas = document.getElementById('siswa-kelas').value;
-            if(!nama) return alert('Harap pilih nama siswa!');
-
-            const soalList = getDCMSoal();
-            const respon = soalList.map(s => ({
-                topik: s.topik,
-                isMasalah: document.getElementById(`soal-${s.id}`).checked ? 1 : 0
-            }));
-
-            const dataBaru = { nama, kelas, respon, tgl: new Date().toLocaleDateString('id-ID') };
-
-            if(db) {
-                db.ref('dcm_data_list').push(dataBaru, (error) => {
-                    if (error) alert("Gagal mengirim data!");
-                    else {
-                        alert("Jawaban DCM berhasil tersimpan dan tersinkronisasi!");
-                        soalList.forEach(s => { const el = document.getElementById(`soal-${s.id}`); if(el) el.checked = false; });
-                    }
-                });
-            } else {
-                const listData = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
-                listData.push(dataBaru);
-                localStorage.setItem('dcm_data_list', JSON.stringify(listData));
-                alert("Jawaban DCM berhasil tersimpan secara lokal!");
-                soalList.forEach(s => { const el = document.getElementById(`soal-${s.id}`); if(el) el.checked = false; });
-            }
-        }
-
+        /* --- FUNGSI PROFIL MASALAH SISWA --- */
         function switchSubProfil(sub) {
             document.getElementById('sub-sec-kelompok').classList.add('hidden');
             document.getElementById('sub-sec-individu').classList.add('hidden');
@@ -1596,13 +1635,15 @@
             let totalMasalah = 0;
             let itemMasalah = [];
 
-            dataSiswa.respon.forEach((r, idx) => {
-                if(r.isMasalah) {
-                    totalMasalah++;
-                    const detailSoal = soalList[idx] ? soalList[idx].text : `Masalah no. ${idx+1}`;
-                    itemMasalah.push({ topik: TOPIK_DCM[r.topik] || "I. KESEHATAN", text: detailSoal });
-                }
-            });
+            if (dataSiswa.respon && Array.isArray(dataSiswa.respon)) {
+                dataSiswa.respon.forEach((r, idx) => {
+                    if(r.isMasalah) {
+                        totalMasalah++;
+                        const detailSoal = soalList[idx] ? soalList[idx].text : `Masalah no. ${idx+1}`;
+                        itemMasalah.push({ topik: TOPIK_DCM[r.topik] || "I. KESEHATAN", text: detailSoal });
+                    }
+                });
+            }
 
             const persentase = Math.round((totalMasalah / (soalList.length || 1)) * 100);
 
@@ -1640,16 +1681,25 @@
 
         function hapusJawabanDCM(keyFirebase) {
             if (confirm("Hapus jawaban DCM ini secara permanen?")) {
+                let localList = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+                localList = localList.filter(d => d.keyFirebase !== keyFirebase);
+                localStorage.setItem('dcm_data_list', JSON.stringify(localList));
+                cloudDCMList = localList;
+
                 if(db) {
-                    db.ref(`dcm_data_list/${keyFirebase}`).remove((err) => {
-                        if (!err) alert("Data terhapus!");
-                    });
+                    try { db.ref(`dcm_data_list/${keyFirebase}`).remove(); } catch(e){}
                 }
+                alert("Data berhasil terhapus!");
+                loadProfil();
+                updateDropdownSiswaProfilIndividu();
+                generateProgramBK();
             }
         }
 
         function bukaModalEditJawaban(keyFirebase) {
             const dataSiswa = cloudDCMList.find(d => d.keyFirebase === keyFirebase);
+            if(!dataSiswa) return;
+
             const soalList = getDCMSoal();
 
             document.getElementById('edit-dcm-firebase-key').value = keyFirebase;
@@ -1657,7 +1707,7 @@
 
             const containerEdit = document.getElementById('container-modal-edit-soal');
             containerEdit.innerHTML = soalList.map((s, idx) => {
-                const isChecked = dataSiswa.respon[idx] && dataSiswa.respon[idx].isMasalah === 1;
+                const isChecked = dataSiswa.respon && dataSiswa.respon[idx] && dataSiswa.respon[idx].isMasalah === 1;
                 return `
                     <div class="soal-item">
                         <div>
@@ -1683,14 +1733,23 @@
                 isMasalah: document.getElementById(`edit-modal-soal-${idx}`).checked ? 1 : 0
             }));
 
-            if(db) {
-                db.ref(`dcm_data_list/${keyFirebase}/respon`).set(responBaru, (err) => {
-                    if (!err) {
-                        alert("Perubahan jawaban diperbarui!");
-                        tutupModalEditJawaban();
-                    }
-                });
+            let localList = JSON.parse(localStorage.getItem('dcm_data_list') || '[]');
+            const index = localList.findIndex(d => d.keyFirebase === keyFirebase);
+            if(index !== -1) {
+                localList[index].respon = responBaru;
+                localStorage.setItem('dcm_data_list', JSON.stringify(localList));
+                cloudDCMList = localList;
             }
+
+            if(db) {
+                try { db.ref(`dcm_data_list/${keyFirebase}/respon`).set(responBaru); } catch(e){}
+            }
+
+            alert("Perubahan jawaban berhasil diperbarui!");
+            tutupModalEditJawaban();
+            renderProfilIndividu();
+            loadProfil();
+            generateProgramBK();
         }
 
         function getDCMSoal() { return JSON.parse(localStorage.getItem('master_soal_dcm')) || DEFAULT_SOAL; }
@@ -1894,7 +1953,11 @@
 
         function loadProfil() {
             const counts = new Array(12).fill(0);
-            cloudDCMList.forEach(item => { item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); });
+            cloudDCMList.forEach(item => { 
+                if(item.respon && Array.isArray(item.respon)) {
+                    item.respon.forEach(r => { if(r.isMasalah) counts[r.topik]++; }); 
+                }
+            });
             document.getElementById('ringkasan-topik').innerHTML = TOPIK_DCM.map((t, idx) => `
                 <div style="display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
                     <span style="font-size: 13px; font-weight: 600;">${t}</span>
@@ -1956,8 +2019,7 @@
             document.body.removeChild(a);
         }
 
-        window.onload = () => { renderKelas(); renderSoal(); };
+        window.onload = () => { renderKelas(); renderSoal(); loadProfil(); };
     </script>
 </body>
 </html>
-
